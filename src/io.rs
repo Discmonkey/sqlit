@@ -21,12 +21,13 @@ impl UserIO {
         let bytes = io::stdin().read_line(&mut input)
             .ok().expect("could not read line");
 
-        if bytes == 0 {
-            None
-        } else {
-            input.pop();
+        match bytes {
+            0 => None,
+            _ => {
+                input.pop();
 
-            Some(input)
+                Some(input)
+            }
         }
 
     }
@@ -37,11 +38,12 @@ impl UserIO {
 
     pub fn write(&self, line: &String) {
         print!("{}", line);
+
         // we need to flush since we are not printing a new line,
         // rust buffers std::out output and only flushes on newlines from my understanding
         match io::stdout().flush() {
             _ => ()
-        }
+        };
     }
 
     pub fn greet(&self) {
