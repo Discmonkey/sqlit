@@ -19,8 +19,11 @@ pub enum ColumnValue {
     Date(Date),
 }
 
-
 impl Column {
+    /**
+        The at method does not return an option, its is up to the owner of this enum
+        to correctly check bounds.
+    **/
     pub fn at(&self, idx: usize) -> ColumnValue {
         match self {
             Self::Floats(s) => ColumnValue::Float(s[idx]),
