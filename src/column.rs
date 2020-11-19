@@ -1,4 +1,5 @@
 use Vec;
+use std::cmp::Ordering;
 
 
 type Date = i64;
@@ -9,6 +10,7 @@ pub enum Column {
     Strings(Vec<String>),
     Booleans(Vec<bool>),
     Dates(Vec<Date>), // lets just unix timestamps, for now
+    Ordering(Vec<Ordering>),
 }
 
 pub enum ColumnValue {
@@ -17,20 +19,4 @@ pub enum ColumnValue {
     String(String),
     Boolean(bool),
     Date(Date),
-}
-
-impl Column {
-    /**
-        The at method does not return an option, its is up to the owner of this enum
-        to correctly check bounds.
-    **/
-    pub fn at(&self, idx: usize) -> ColumnValue {
-        match self {
-            Self::Floats(s) => ColumnValue::Float(s[idx]),
-            Self::Ints(i) => ColumnValue::Int(i[idx]),
-            Self::Strings(s) => ColumnValue::String(s[idx].clone()),
-            Self::Booleans(b) => ColumnValue::Boolean(b[idx]),
-            Self::Dates(d) => ColumnValue::Date(d[idx]),
-        }
-    }
 }
