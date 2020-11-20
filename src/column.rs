@@ -13,10 +13,19 @@ pub enum Column {
     Ordering(Vec<Ordering>),
 }
 
-pub enum ColumnValue {
+pub enum Value {
     Float(f64),
     Int(i64),
     String(String),
     Boolean(bool),
     Date(Date),
+}
+
+pub enum Type {
+    Float,
+    Int,
+    String,
+    Boolean,
+    Date,
+    Ordering // only used internally
 }

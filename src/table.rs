@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 use std::io;
 use std::fs::File;
-use crate::column::{Column, ColumnValue};
+use crate::column;
 use std::io::BufRead;
 
 
 pub struct Table {
     columns: HashMap<String, usize>,
-    values: Vec<Column>,
+    values: Vec<column::Column>,
     rows: usize,
 }
 
 
 impl Table {
 
-    // pub fn from_file(file_location: &str) -> Result<Table, std::io::Error> {
+    // pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
     //     let f = File::open(file_location)?;
     //
     //     let mut lines = std::io::BufReader::new(f).lines();

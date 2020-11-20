@@ -9,6 +9,7 @@ mod parser;
 mod select;
 mod scalar;
 mod ops;
+mod converters;
 
 fn main() {
     let io = io::UserIO::new();
