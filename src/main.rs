@@ -10,6 +10,7 @@ mod select;
 mod scalar;
 mod ops;
 mod converters;
+mod column_builder;
 
 fn main() {
     let io = io::UserIO::new();
