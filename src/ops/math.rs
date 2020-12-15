@@ -1,12 +1,33 @@
 use crate::column::Column;
 
-macro_rules! ok_op_bool {
+pub enum Op {
+    Add,
+    Multiply,
+    Subtract,
+    Divide,
+    And,
+    Or,
+    Equals,
+    NotEquals,
+    GreaterThan,
+    GreaterThanEquals,
+    LessThan,
+    LessThanEquals,
+    Concat,
+    Split,
+}
+
+pub trait SqlOp {
+    fn num_args() -> usize;
+}
+
+macro_rules! ok_op_bool_columns {
     ($op: tt, $left: expr, $right: expr) => {
         Ok(Column::Booleans($left.iter().zip($right).map(|(&a, b)| {a $op b}).collect()))
     }
 }
 
-macro_rules! math_op {
+macro_rules! math_op_columns {
     ($op: tt, $left: expr, $right: expr) => {
         match ($left, $right) {
             (Column::Floats(floats_a), Column::Floats(floats_b)) => Ok(Column::Floats(floats_a.iter().zip(floats_b).map(|(a, b)| {a $op &b}).collect())),
@@ -19,22 +40,22 @@ macro_rules! math_op {
 }
 
 pub fn add(a: Column, b: Column) -> Result<Column, String> {
-    math_op!(+, a, b)
+    math_op_columns!(+, a, b)
 }
 
 pub fn multiply(a: Column, b: Column) -> Result<Column, String> {
-    math_op!(*, a, b)
+    math_op_columns!(*, a, b)
 }
 
 pub fn subtract(a: Column, b: Column) -> Result<Column, String> {
-    math_op!(-, a, b)
+    math_op_columns!(-, a, b)
 }
 
 pub fn divide(a: Column, b: Column) -> Result<Column, String> {
-    math_op!(/, a, b)
+    math_op_columns!(/, a, b)
 }
 
-macro_rules! boolean_op {
+macro_rules! boolean_op_columns {
     ($op: tt, $left: expr, $right: expr) => {
         match ($left, $right) {
             (Column::Booleans(booleans_a), Column::Booleans(booleans_b)) => Ok(Column::Booleans(booleans_a.iter().zip(booleans_b).map(|(&a, b)| {a $op b}).collect())),
@@ -43,11 +64,11 @@ macro_rules! boolean_op {
     }
 }
 pub fn and(a: Column, b: Column) -> Result<Column, String> {
-    boolean_op!(&&, a, b)
+    boolean_op_columns!(&&, a, b)
 }
 
 pub fn or(a: Column, b: Column) -> Result<Column, String> {
-    boolean_op!(||, a, b)
+    boolean_op_columns!(||, a, b)
 }
 
 macro_rules! comparison {
@@ -64,7 +85,6 @@ macro_rules! comparison {
         }
     }
 }
-
 
 pub fn equals(a: Column, b:Column) -> Result<Column, String> {
     comparison!(==, a, b)

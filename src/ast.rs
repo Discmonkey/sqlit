@@ -1,9 +1,13 @@
+use crate::result::SqlResult;
+use crate::ops::math::Op;
 
-
-struct Ast {
-
+pub struct Ast {
+    op: Op,
+    left: Box<AstNode>,
+    right: Box<AstNode>,
 }
 
-struct AstNode {
-
+pub enum AstNode {
+    Ast(Box<Ast>),
+    Result(SqlResult)
 }
