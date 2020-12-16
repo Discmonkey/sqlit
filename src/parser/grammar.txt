@@ -1,0 +1,48 @@
+#### sqlit grammar
+
+// main entry point
+query:
+    SELECT <columns> (<from>)? (<where>)? (<group by>)? (<order by>)? (<into>)?
+
+table:
+    identifier | '(' <query> ')' identifier (LEFT JOIN | INNER JOIN table)*
+
+columns:
+    <column> (, <column>)*
+
+expression:
+    <equality>
+
+equality:
+    <comparison> ( "!=" | "==" <comparison> )*
+
+comparison:
+    <term> ( ">" | ">=" | "<" | "<=" <term> )*
+
+term:
+    <factor> ("-" | "+" factor )*
+
+factor:
+    <unary> ("/" | "*" <unary> )*
+
+unary:
+    "!" | "-" <unary> | <primary>
+
+// technically a <query> in a primary expression can only represent a single value such as, SELECT max(a) FROM table, however this restriction is difficult to express in the grammar:
+primary:
+    identifier | "(" expression | query ")"
+
+from:
+    FROM <table>
+
+where:
+    WHERE
+
+group by:
+    GROUP BY <columns>
+
+order by:
+    ORDER BY <columns>
+
+into:
+    INTO <target>
