@@ -8,7 +8,7 @@ table:
     identifier | '(' <query> ')' identifier (LEFT JOIN | INNER JOIN table)*
 
 columns:
-    <column> (, <column>)*
+    <expression> (, <expression>)*
 
 expression:
     <equality>
@@ -26,7 +26,10 @@ factor:
     <unary> ("/" | "*" <unary> )*
 
 unary:
-    "!" | "-" <unary> | <primary>
+    "!" | "-" <unary> | <function>
+
+function:
+    identifier "(" function ")" | primary
 
 // technically a <query> in a primary expression can only represent a single value such as, SELECT max(a) FROM table, however this restriction is difficult to express in the grammar:
 primary:
@@ -36,7 +39,7 @@ from:
     FROM <table>
 
 where:
-    WHERE
+    WHERE <expression>
 
 group by:
     GROUP BY <columns>
@@ -46,3 +49,7 @@ order by:
 
 into:
     INTO <target>
+
+target:
+    file'('identifier')' | identifier
+

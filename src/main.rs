@@ -5,12 +5,12 @@ mod ast;
 mod table;
 mod tokenizer;
 mod result;
-mod parser;
 mod select;
 mod scalar;
 mod ops;
 mod converters;
 mod build_column;
+mod parser;
 
 fn main() {
     let io = io::UserIO::new();
