@@ -21,7 +21,7 @@ pub trait SqlOp {
     fn num_args() -> usize;
 }
 
-macro_rules! ok_op_bool_columns {
+macro_rules! ok_op_bool {
     ($op: tt, $left: expr, $right: expr) => {
         Ok(Column::Booleans($left.iter().zip($right).map(|(&a, b)| {a $op b}).collect()))
     }

@@ -1,4 +1,4 @@
-use crate::result::SqlResult;
+use crate::result::{SqlResult, Evaluated};
 use crate::ops::math::Op;
 
 pub struct Ast {
@@ -9,5 +9,5 @@ pub struct Ast {
 
 pub enum AstNode {
     Ast(Box<Ast>),
-    Result(SqlResult)
+    Result(SqlResult<Evaluated>)
 }

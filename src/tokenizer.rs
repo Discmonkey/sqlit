@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::fmt;
 use std::collections::VecDeque;
+use std::any::Any;
 
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -19,6 +20,20 @@ pub enum TokenType {
 
     // 234.344 true 1 false NULL 'hello'
     Literal,
+}
+
+impl TokenType {
+    pub fn to_str(&self) -> &str {
+        match self {
+            TokenType::Identifier => "identifier",
+            TokenType::Keyword => "keyword",
+            TokenType::Literal => "literal",
+            TokenType::Operator => "operator",
+            TokenType::Separator => "separator"
+        }
+    }
+
+
 }
 
 #[derive(Debug, Clone)]
@@ -41,21 +56,16 @@ impl Token {
     pub fn get_text(&self) -> &String {
         &self.text
     }
+
+    pub fn is(&self, value: &str) -> bool {
+        self.text.as_str() == value
+    }
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 
-        let type_;
-        match self.token_type {
-            TokenType::Identifier => type_ = "identifier",
-            TokenType::Keyword => type_ = "keyword",
-            TokenType::Literal => type_ = "literal",
-            TokenType::Operator => type_ = "operator",
-            TokenType::Separator => type_ = "separator"
-        };
-
-        write!(f, "({}: {})", type_, self.text)
+        write!(f, "({}: {})", self.token_type.to_str(), self.text)
     }
 }
 
@@ -97,16 +107,10 @@ impl Tokenizer {
                 continue;
             }
 
-            if let Some(m) = cap.name("keyword") {
-                v.push_back(Token::new(m.to_string(), TokenType::Keyword));
-            } else if let Some(m) = cap.name("operator") {
-                v.push_back(Token::new(m.to_string(), TokenType::Operator));
-            } else if let Some(m) = cap.name("literal") {
-                v.push_back(Token::new(m.to_string(), TokenType::Literal));
-            } else if let Some(m) = cap.name("identifier") {
-                v.push_back(Token::new(m.to_string(), TokenType::Identifier));
-            } else if let Some(m) = cap.name("separator") {
-                v.push_back(Token::new(m.to_string(), TokenType::Separator));
+            for token_type in vec!(TokenType::Keyword, TokenType::Operator, TokenType::Literal, TokenType::Identifier, TokenType::Separator) {
+                if let Some(m) = cap.name(token_type.to_str()) {
+                    v.push_back(Token::new(m.to_string().to_lowercase(), token_type));
+                }
             }
         }
 
@@ -114,3 +118,25 @@ impl Tokenizer {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use crate::tokenizer::Tokenizer;
+
+    #[test]
+    fn tokenize_basic_select() {
+        let t = Tokenizer::new();
+
+        let tokens = t.tokenize("SELECT a, b, c FROM table".to_string());
+
+        match tokens {
+            Ok(mut t) => {
+                let first = t.pop_front().unwrap();
+                assert_eq!(first.text.as_str(), "SELECT");
+            },
+            Err(_e) => assert!(false)
+        }
+
+
+    }
+
+}

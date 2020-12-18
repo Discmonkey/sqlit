@@ -1,7 +1,6 @@
 use crate::column;
-use crate::column::{Type, Value, Column};
-use regex::Regex;
-use chrono::{DateTime, NaiveDateTime, NaiveDate};
+use crate::column::{Column};
+use chrono::{DateTime, NaiveDate};
 
 fn result_to_option<T, E>(result: Result<T, E>) -> Option<T> {
     match result {
@@ -106,7 +105,6 @@ impl Converter<column::DateTime> for ToDate {
 #[cfg(test)]
 mod test {
     use crate::converters::{ToFloat, ToInt, Converter, ToBool, ToDate};
-    use crate::column::Value;
 
     #[test]
     fn convert_int() {
@@ -118,7 +116,6 @@ mod test {
         match int_converter.convert(source) {
             None => assert!(false),
             Some(i) => assert_eq!(i, 12),
-            _ => assert!(false),
         }
 
         match float_converter.convert(source) {
@@ -136,7 +133,7 @@ mod test {
 
         match int_converter.convert(source) {
             None => assert!(true),
-            Some(i) => assert!(false),
+            Some(_i) => assert!(false),
         }
 
         match float_converter.convert(source) {
@@ -167,17 +164,17 @@ mod test {
 
         match c.convert(true_as_int) {
             None => assert!(true),
-            Some(b) => assert!(false),
+            Some(_b) => assert!(false),
         }
 
         match c.convert(false_as_int) {
             None => assert!(true),
-            Some(b) => assert!(false),
+            Some(_b) => assert!(false),
         }
 
         match c.convert(false_as_non_one) {
             None => assert!(true),
-            Some(b) => assert!(false),
+            Some(_b) => assert!(false),
         }
 
     }
@@ -189,7 +186,7 @@ mod test {
         let mut converter = ToDate::new();
 
         match converter.convert(date) {
-            Some(d) => assert!(true),
+            Some(_d) => assert!(true),
             _ => assert!(false),
         }
     }

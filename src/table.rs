@@ -1,8 +1,5 @@
 use std::collections::HashMap;
-use std::io;
-use std::fs::File;
 use crate::column;
-use std::io::BufRead;
 
 
 pub struct Table {

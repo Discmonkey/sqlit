@@ -7,5 +7,23 @@ pub enum Evaluated {
     Value(String),
 }
 
-pub type SqlResult = std::result::Result<Evaluated, String>;
+pub enum ErrorType {
+    Syntax,
+    Type,
+}
+
+pub struct SqlError {
+    type_: ErrorType,
+    message: String,
+}
+
+impl SqlError {
+    pub fn new(message: &str, error_type: ErrorType) -> Self {
+        SqlError {
+            type_: error_type, message: message.to_string()
+        }
+    }
+}
+
+pub type SqlResult<T> = std::result::Result<T, SqlError>;
 
