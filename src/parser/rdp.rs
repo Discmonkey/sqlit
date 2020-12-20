@@ -24,7 +24,7 @@ pub enum ParserNodeType {
 
 pub struct ParserNode {
     node_type: ParserNodeType,
-    token: Option<Token>, // in the case of certain operations / * +, a function call, etc
+    tokens: Vec<Token>, // in the case of certain operations / * +, a function call, etc
     children: Vec<Box<ParserNode>>,
 }
 
@@ -33,12 +33,16 @@ impl ParserNode {
         ParserNode {
             children: vec!(),
             node_type,
-            token: None
+            tokens: vec!(),
         }
     }
 
     pub fn add_child(&mut self, node: Box<ParserNode>) {
         self.children.push(node);
+    }
+
+    pub fn add_token(&mut self, token: Token) {
+        self.tokens.push(token);
     }
 }
 
@@ -50,11 +54,11 @@ type ParserResult = SqlResult<Box<ParserNode>>;
 
 impl RecursiveDescentParser {
 
-    pub fn parse(&self, &mut tokens: Tokens) -> ParserResult {
+    pub fn parse(&self, tokens: &mut Tokens) -> ParserResult {
         self.parse_query(tokens)
     }
 
-    fn parse_query(&self, &mut tokens: Tokens) -> ParserResult {
+    fn parse_query(&self, tokens: &mut Tokens) -> ParserResult {
         let mut node = Box::new(ParserNode::new(ParserNodeType::Query));
         // always consume the next token
         let token = tokens.pop_front().unwrap();
@@ -66,51 +70,165 @@ impl RecursiveDescentParser {
         // columns are required
         node.add_child(self.parse_columns(tokens)?);
 
-        let mut remaining = vec!("into", "order by", "group by", "where", "from");
-        let mut next = tokens.front();
+        let optional_clauses = vec!("from", "where", "group by", "order by", "into");
+        let mut current_index = 0;
 
-        // we have tokens remaining which means we need to try to match against some optional clauses
-        while let Some(token) = next {
-            while remaining.len() > 0 && !token.is(remaining.last().unwrap()) {
-                remaining.pop();
+        while let Some(token) = tokens.front() {
+            let index = optional_clauses.iter().position(|s| { token.is(s) });
+
+            match index {
+                Some(i) => {
+                    if i < current_index {
+                        return Err(SqlError("select clauses out of order", Syntax));
+                    }
+
+                    current_index = i;
+
+                    match optional_clauses[current_index] {
+                        "from" => node.add_child(self.parse_from(tokens)?),
+                        "where" => node.add_child(self.parse_where(tokens)?),
+                        "group by" => node.add_child(self.parse_group_by(tokens)?),
+                        "order by" => node.add_child(self.parse_order_by(tokens)?),
+                        "into" => node.add_child(self.parse_into(tokens)?),
+                        _ => ()
+                    }
+                }
+                None => break
             }
-
-            if remaining.len() == 0 {
-                return Err(SqlError::new(format!("{} is out of order", token.get_text()).as_str(), Syntax));
-            }
-
-            let mut clause = remaining.pop().unwrap();
-
-            match clause {
-                "into" => node.add_child(self.parse_into(tokens)?),
-                "order by" => node.add_child(self.parse_order_by(tokens)?),
-                "group by" => node.add_child(self.parse_group_by(tokens)?),
-                "where" => node.add_child(self.parse_where(tokens)?),
-                "from" => node.add_child(self.parse_from(tokens)?),
-                _ => {}
-            };
-
-            next = tokens.front();
         }
 
         Ok(node)
     }
-    fn parse_table(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_columns(&self, &mut &tokens: Tokens) -> ParserResult {}
-    fn parse_expression(&self, &mut &tokens: Tokens) -> ParserResult {}
-    fn parse_equality(&self, &mut &tokens: Tokens) -> ParserResult {}
-    fn parse_comparison(&self, &mut &tokens: Tokens) -> ParserResult {}
-    fn parse_term(&self, &mut &tokens: Tokens) -> ParserResult {}
-    fn parse_factor(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_unary(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_function(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_primary(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_from(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_where(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_group_by(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_order_by(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_into(&self, &mut tokens: Tokens) -> ParserResult {}
-    fn parse_target(&self, &mut tokens: Tokens) -> ParserResult {}
+
+    fn parse_columns(&self, tokens: &mut Tokens) -> ParserResult {
+
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Columns));
+
+        node.add_child(self.parse_expression(tokens)?);
+
+        while let Some(t) = tokens.front() {
+            if t.is(",") {
+                tokens.pop_front();
+                node.add_child(self.parse_expression(tokens)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(node)
+    }
+
+    // expression is used for readability but does not actually produce a node, making the walk a bit easier
+    fn parse_expression(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Expression));
+
+        node.add_child(self.parse_equality(tokens)?);
+
+        Ok(node)
+    }
+
+    fn parse_equality(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Equality));
+
+        node.add_child(self.parse_comparison(tokens)?);
+
+        while let Some(t) = tokens.front() {
+            if t.is("!=") || t.is("=") {
+                node.add_token(tokens.pop_front().unwrap());
+                node.add_child(self.parse_comparison(tokens)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_comparison(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Comparison));
+
+        node.add_child(self.parse_term(tokens)?);
+
+        while let Some(t) = tokens.front() {
+            if t.is(">") || t.is(">=") || t.is("<") || t.is("<=") {
+                node.add_token(tokens.pop_front().unwrap()?);
+                node.add_child(self.parse_term(tokens)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_term(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Term));
+
+        node.add_child(self.parse_factor(tokens)?);
+
+        while let Some(t) = tokens.front() {
+            if t.is("-") || t.is("+") {
+                node.add_token(tokens.pop_front().unwrap()?);
+                node.add_child(self.parse_factor(tokens)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_factor(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Factor));
+
+        node.add_child(self.parse_unary(tokens)?);
+
+        while let Some(t) = tokens.front() {
+            if t.is("/") || t.is("*") {
+                node.add_token(tokens.pop_front().unwrap()?);
+                node.add_child(self.parse_unary(tokens)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_unary(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Unary));
+
+        while let Some(t) = tokens.front() {
+            if t.is("!") || t.is("-") {
+                node.add_token(tokens.pop_front().unwrap()?);
+                node.add_child(self.parse_unary(tokens)?);
+            } else {
+                node.add_child(self.parse_function(tokens)?);
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_function(&self, tokens: &mut Tokens) -> ParserResult {
+
+    }
+
+    fn parse_primary(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_from(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_table(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_where(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_group_by(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_order_by(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_into(&self, tokens: &mut Tokens) -> ParserResult {}
+
+    fn parse_target(&self, tokens: &mut Tokens) -> ParserResult {}
 
 }
 
