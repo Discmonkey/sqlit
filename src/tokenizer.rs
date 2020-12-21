@@ -60,6 +60,10 @@ impl Token {
     pub fn is(&self, value: &str) -> bool {
         self.text.as_str() == value
     }
+
+    pub fn is_type(&self, value: TokenType) -> bool {
+        value == self.token_type
+    }
 }
 
 impl fmt::Display for Token {

@@ -255,7 +255,26 @@ impl RecursiveDescentParser {
     fn parse_table(&self, tokens: &mut Tokens) -> ParserResult {
         let mut node = Box::new(ParserNode::new(ParserNodeType::Table));
 
+        loop {
+            let next = tokens.front().unwrap();
 
+            if next.is_type(Identifier) {
+                node.add_token(tokens.pop_front().unwrap())
+            } else if next.is("(") {
+                tokens.pop_front();
+                node.add_child(self.parse_query(tokens)?);
+
+                let closing = tokens.pop_front().unwrap();
+
+                if !closing.is(")") {
+                    return Err(SqlError::new("missing closing paren", Syntax));
+                }
+
+                let identifier = tokens.pop_front().unwrap();
+
+                if !closing.is_type()
+            }
+        }
     }
 
     fn parse_where(&self, tokens: &mut Tokens) -> ParserResult {
