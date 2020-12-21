@@ -26,14 +26,11 @@ factor:
     <unary> ("/" | "*" <unary> )*
 
 unary:
-    "!" | "-" <unary> | <function>
-
-function:
-    identifier "(" function ")" | primary
+    "!" | "-" <unary> | <primary>
 
 // technically a <query> in a primary expression can only represent a single value such as, SELECT max(a) FROM table, however this restriction is difficult to express in the grammar:
 primary:
-    identifier | "(" expression | query ")"
+    identifier ("(" expression | query ")")? | "(" expression | query ")"
 
 from:
     FROM <table>

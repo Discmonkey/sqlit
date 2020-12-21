@@ -1,6 +1,7 @@
 use crate::tokenizer::{Token, Tokens};
 use crate::result::{SqlError, SqlResult};
 use crate::result::ErrorType::Syntax;
+use crate::tokenizer::TokenType::Identifier;
 
 pub enum ParserNodeType {
     Query,
@@ -203,32 +204,79 @@ impl RecursiveDescentParser {
                 node.add_token(tokens.pop_front().unwrap()?);
                 node.add_child(self.parse_unary(tokens)?);
             } else {
-                node.add_child(self.parse_function(tokens)?);
+                node.add_child(self.parse_primary(tokens)?);
             }
         }
 
         Ok(node)
     }
 
-    fn parse_function(&self, tokens: &mut Tokens) -> ParserResult {
+    fn parse_primary(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Primary));
+
+        let expression_or_query = false;
+
+        if let Some(t) = tokens.front() {
+            if t.get_type() == Identifier {
+                node.add_token(tokens.pop_front().unwrap());
+            }
+        }
+
+        if tokens.len() > 0 && tokens.front().unwrap().is("(") {
+            node.add_token(tokens.pop_front().unwrap());
+
+            let next = tokens.front().unwrap();
+
+            if next.is("select") {
+                node.add_child(self.parse_query(tokens)?);
+            } else if next.is(")") {
+                tokens.pop_front();
+            } else {
+                node.add_child(self.parse_expression(tokens)?);
+            }
+        }
+
+        Ok(node)
+    }
+
+    fn parse_from(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::From));
+        let next = tokens.pop_front().unwrap();
+
+        if !next.is("from") {
+            Err(SqlError("mis-configured from statement", Syntax))
+        }
+
+        node.add_child(self.parse_table(tokens)?);
+
+        Ok(node)
+    }
+
+    fn parse_table(&self, tokens: &mut Tokens) -> ParserResult {
+        let mut node = Box::new(ParserNode::new(ParserNodeType::Table));
+
 
     }
 
-    fn parse_primary(&self, tokens: &mut Tokens) -> ParserResult {}
+    fn parse_where(&self, tokens: &mut Tokens) -> ParserResult {
 
-    fn parse_from(&self, tokens: &mut Tokens) -> ParserResult {}
+    }
 
-    fn parse_table(&self, tokens: &mut Tokens) -> ParserResult {}
+    fn parse_group_by(&self, tokens: &mut Tokens) -> ParserResult {
 
-    fn parse_where(&self, tokens: &mut Tokens) -> ParserResult {}
+    }
 
-    fn parse_group_by(&self, tokens: &mut Tokens) -> ParserResult {}
+    fn parse_order_by(&self, tokens: &mut Tokens) -> ParserResult {
 
-    fn parse_order_by(&self, tokens: &mut Tokens) -> ParserResult {}
+    }
 
-    fn parse_into(&self, tokens: &mut Tokens) -> ParserResult {}
+    fn parse_into(&self, tokens: &mut Tokens) -> ParserResult {
 
-    fn parse_target(&self, tokens: &mut Tokens) -> ParserResult {}
+    }
+
+    fn parse_target(&self, tokens: &mut Tokens) -> ParserResult {
+
+    }
 
 }
 
