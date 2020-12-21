@@ -15,6 +15,8 @@ mod parser;
 fn main() {
     let io = io::UserIO::new();
     let toke = tokenizer::Tokenizer::new();
+    let parser = parser::rdp::RecursiveDescentParser{};
+
     loop {
         io.greet();
 
@@ -24,15 +26,17 @@ fn main() {
 
         let l = line.unwrap();
 
-        let tokens = toke.tokenize(l);
+        let mut tokens = toke.tokenize(l);
 
         match tokens {
             Err(e) => io.write_line(&e.to_string()),
-            Ok(tokens) => {
-                tokens.iter().for_each(|t| {
-                    io.write(&format!("{} ", t));
-                });
-                println!();
+            Ok(mut tokens) => {
+                let parse_result = parser.parse(&mut tokens);
+
+                match parse_result {
+                    Err(e) => println!("{}", e),
+                    Ok(parsed) => println!("{}", parsed)
+                }
             }
         }
     }

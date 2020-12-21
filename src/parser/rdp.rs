@@ -3,7 +3,10 @@ use crate::result::{SqlError, SqlResult};
 use crate::result::ErrorType::Syntax;
 use crate::tokenizer::TokenType::{Identifier, Literal};
 use crate::parser::rdp::ParserNodeType::{Where, GroupBy, OrderBy};
+use std::fmt;
 
+
+#[derive(Debug)]
 pub enum ParserNodeType {
     Query,
     Table,
@@ -45,6 +48,30 @@ impl ParserNode {
 
     pub fn add_token(&mut self, token: Token) {
         self.tokens.push(token);
+    }
+}
+
+impl fmt::Display for ParserNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut working_layers = vec!();
+
+
+        let mut children = vec!(self);
+
+        while children.len() > 0 {
+            working_layers.push(children);
+
+            children = vec!();
+            working_layers.last().unwrap().iter().for_each(|parent| {
+                parent.children.iter().for_each(|child| {
+                    children.push(child.as_ref());
+                })
+            })
+
+
+        }
+
+        Ok(())
     }
 }
 
@@ -120,7 +147,13 @@ impl RecursiveDescentParser {
 
     // expression is used for readability but does not actually produce a node, making the walk a bit easier
     fn parse_expression(&self, tokens: &mut Tokens) -> ParserResult {
-        return self.parse_equality(tokens);
+        let mut tree = self.parse_equality(tokens)?;
+
+        while tree.children.len() == 1 && tree.tokens.len() == 0 {
+            tree = tree.children.pop().unwrap();
+        }
+
+        Ok(tree)
     }
 
     fn parse_equality(&self, tokens: &mut Tokens) -> ParserResult {

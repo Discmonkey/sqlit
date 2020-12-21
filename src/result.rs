@@ -1,5 +1,6 @@
 use crate::column::Column;
 use crate::scalar::Scalar;
+use std::fmt;
 
 pub enum Evaluated {
     Column(Column),
@@ -7,6 +8,7 @@ pub enum Evaluated {
     Value(String),
 }
 
+#[derive(Debug)]
 pub enum ErrorType {
     Syntax,
     Type,
@@ -22,6 +24,12 @@ impl SqlError {
         SqlError {
             type_: error_type, message: message.to_string()
         }
+    }
+}
+
+impl fmt::Display for SqlError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}: {}", self.type_, self.message)
     }
 }
 
