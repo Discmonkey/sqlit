@@ -35,7 +35,7 @@ fn main() {
 
                 match parse_result {
                     Err(e) => println!("{}", e),
-                    Ok(parsed) => println!("{}", parsed)
+                    Ok(parsed) => print!("{}", parsed)
                 }
             }
         }
