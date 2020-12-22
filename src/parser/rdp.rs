@@ -53,12 +53,20 @@ impl ParserNode {
 
 impl fmt::Display for ParserNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut working_layers = vec!();
+        struct Info {
+            pub my_size: usize,
 
+        }
+        let mut working_layers = vec!();
+        let mut offsets = vec!();
 
         let mut children = vec!(self);
+        let mut max_size = 1;
+
 
         while children.len() > 0 {
+            offsets.push(vec!());
+
             working_layers.push(children);
 
             children = vec!();
@@ -66,10 +74,23 @@ impl fmt::Display for ParserNode {
                 parent.children.iter().for_each(|child| {
                     children.push(child.as_ref());
                 })
-            })
+            });
 
-
+            if children.len() > max_size {
+               max_size = children.len();
+            }
         }
+
+        offsets.iter().for_each(|mut sizes| {
+            sizes.resize(max_size, 0);
+        });
+
+
+        working_layers.iter().for_each(|slice| {
+            writeln!(f);
+        });
+
+
 
         Ok(())
     }
