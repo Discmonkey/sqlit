@@ -1,6 +1,5 @@
 mod schema;
 mod column;
-mod io;
 mod ast;
 mod table;
 mod tokenizer;
@@ -12,26 +11,29 @@ mod converters;
 mod build_column;
 mod parser;
 
+use linefeed;
+use std::io;
 
+fn main() -> std::io::Result<()> {
 
-fn main() {
-    let io = io::UserIO::new();
+    let mut io = linefeed::Interface::new("sqlit")?;
+    io.set_prompt("sqlit> ");
+    io.set_completer(std::sync::Arc::new(linefeed::complete::PathCompleter));
+
     let toke = tokenizer::Tokenizer::new();
     let parser = parser::rdp::RecursiveDescentParser{};
 
-    loop {
-        io.greet();
+    while let linefeed::ReadResult::Input(input) = io.read_line()? {
+        if input.len() == 0 {
+            continue
+        } else {
+            io.add_history(input.trim().to_string());
+        }
 
-        let line = io.read_line();
-
-        if line.is_none() { break; }
-
-        let l = line.unwrap();
-
-        let tokens = toke.tokenize(l);
+        let tokens = toke.tokenize(input);
 
         match tokens {
-            Err(e) => io.write_line(&e.to_string()),
+            Err(e) => println!("{}", e),
             Ok(mut tokens) => {
                 let parse_result = parser.parse(&mut tokens);
 
@@ -43,7 +45,9 @@ fn main() {
         }
     }
 
-    print!("exiting...");
+    println!("exiting...");
+
+    Ok(())
 }
 
 #[cfg(test)]

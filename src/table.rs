@@ -6,10 +6,10 @@ use rayon::prelude::*;
 use crate::build_column::build_column;
 
 pub struct Table {
-    column_list: Vec<String>,
-    column_map: HashMap<String, usize>,
-    columns: Vec<column::Column>,
-    num_rows: usize,
+    column_list: Vec<String>, // list of columns names
+    column_map: HashMap<String, usize>, // a map of column names to indices
+    columns: Vec<column::Column>, // the actual data
+    num_rows: usize, // number of rows in the table
 }
 
 // trim string from white spaces, also replace "|' from first and last characters
@@ -79,7 +79,6 @@ impl Table {
 
 
     }
-
 
     pub fn len(&self) -> usize {
         self.num_rows
