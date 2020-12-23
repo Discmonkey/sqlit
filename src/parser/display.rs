@@ -81,9 +81,9 @@ fn write_to_vec(offsets: &mut Vec<Vec<usize>>,
         write!(writes[coord.row], "{}", ' ');
     }
 
-    write_once(node, &mut writes[coord.row]);
+    let _ = write_once(node, &mut writes[coord.row]);
 
-    node.children.iter().enumerate().for_each(|(num, child)| {
+    node.children.iter().for_each(|child| {
         let row = coord.row + 1;
         let column = column_counters[row];
         write_to_vec(offsets, writes, column_counters, child.as_ref(), Coord {
@@ -106,9 +106,9 @@ impl Display for ParserNode {
         fill_offsets(&mut offsets, self, Coord{row: 0, column: 0}, 0);
         write_to_vec(&mut offsets, &mut writes, &mut column_counters, self, Coord{row: 0, column: 0});
 
-        writes.iter().for_each(|v| {
-            writeln!(f, "{}", String::from_utf8(v.clone()).unwrap());
-        });
+        for v in writes.iter() {
+            writeln!(f, "{}", String::from_utf8(v.clone()).unwrap())?;
+        };
 
         Ok(())
     }

@@ -1,4 +1,4 @@
-use crate::tokenizer::{Token, Tokens};
+use crate::tokenizer::{Tokens};
 use crate::result::{SqlError, SqlResult};
 use crate::result::ErrorType::Syntax;
 use crate::tokenizer::TokenType::{Identifier, Literal};
@@ -186,16 +186,20 @@ impl RecursiveDescentParser {
         }
 
         if tokens.len() > 0 && tokens.front().unwrap().is("(") {
-            node.add_token(tokens.pop_front().unwrap());
+            tokens.pop_front();
 
             let next = tokens.front().unwrap();
 
             if next.is("select") {
                 node.add_child(self.parse_query(tokens)?);
-            } else if next.is(")") {
-                tokens.pop_front();
             } else {
                 node.add_child(self.parse_expression(tokens)?);
+            }
+
+            if tokens.len() > 0 && tokens.front().unwrap().is(")") {
+                tokens.pop_front();
+            } else {
+                return Err(SqlError::new("non terminated paren", Syntax));
             }
         }
 
@@ -245,7 +249,7 @@ impl RecursiveDescentParser {
             let maybe_join = tokens.front();
 
             if let Some(t) = maybe_join {
-                if !t.is("LEFT JOIN") && !t.is("INNER JOIN") {
+                if !t.is("left join") && !t.is("inner join") {
                     break;
                 }
 
@@ -336,7 +340,6 @@ impl RecursiveDescentParser {
 #[cfg(test)]
 mod test {
     use crate::tokenizer::Tokenizer;
-    use crate::parser::rdp;
     use crate::parser::rdp::RecursiveDescentParser;
 
     #[test]
@@ -350,7 +353,7 @@ mod test {
         let maybe_tree = p.parse(&mut tokens);
 
         match maybe_tree {
-            Err(e) => assert!(false),
+            Err(_e) => assert!(false),
             Ok(tree) => assert!(tree.children.len() > 0)
         }
 

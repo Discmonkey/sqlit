@@ -12,6 +12,8 @@ mod converters;
 mod build_column;
 mod parser;
 
+
+
 fn main() {
     let io = io::UserIO::new();
     let toke = tokenizer::Tokenizer::new();
@@ -26,7 +28,7 @@ fn main() {
 
         let l = line.unwrap();
 
-        let mut tokens = toke.tokenize(l);
+        let tokens = toke.tokenize(l);
 
         match tokens {
             Err(e) => io.write_line(&e.to_string()),
@@ -43,3 +45,7 @@ fn main() {
 
     print!("exiting...");
 }
+
+#[cfg(test)]
+#[macro_use]
+extern crate time_test;

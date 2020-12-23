@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 chrono = "0.4.19"
 regex = "0.1.41"
+rayon = "1.5.0"
+time-test = "0.2.2"
