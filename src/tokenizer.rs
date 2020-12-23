@@ -134,7 +134,7 @@ mod test {
         match tokens {
             Ok(mut t) => {
                 let first = t.pop_front().unwrap();
-                assert_eq!(first.text.as_str(), "SELECT");
+                assert_eq!(first.text.as_str(), "select");
             },
             Err(_e) => assert!(false)
         }

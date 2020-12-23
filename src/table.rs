@@ -46,7 +46,13 @@ impl Table {
 
         let header_line = maybe_column_line.unwrap()?;
 
-        let column_list = parse_line(header_line);
+        let column_list: Vec<String> = parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
+            if s.len() == 0 {
+                num.to_string()
+            } else {
+                s
+            }
+        }).collect();
 
         let column_map: HashMap<String, usize> = column_list.iter().enumerate().map(|(index, name)| {
             (name.clone(), index)
