@@ -4,6 +4,7 @@ use crate::result::ErrorType::Syntax;
 use crate::tokenizer::TokenType::{Identifier, Literal};
 use crate::parser::rdp::ParserNodeType::{Where, GroupBy, OrderBy};
 use crate::parser::{ParserNode, ParserNodeType};
+use crate::parser::ParserNodeType::Function;
 
 pub struct RecursiveDescentParser {}
 
@@ -172,6 +173,7 @@ impl RecursiveDescentParser {
 
     fn parse_primary(&self, tokens: &mut Tokens) -> ParserResult {
         let mut node = Box::new(ParserNode::new(ParserNodeType::Primary));
+        let mut found_identifier = false;
 
         if let Some(t) = tokens.front() {
             if t.get_type() == Literal {
@@ -182,6 +184,7 @@ impl RecursiveDescentParser {
 
             if t.get_type() == Identifier {
                 node.add_token(tokens.pop_front().unwrap());
+                found_identifier = true;
             }
         }
 
@@ -200,6 +203,11 @@ impl RecursiveDescentParser {
                 tokens.pop_front();
             } else {
                 return Err(SqlError::new("non terminated paren", Syntax));
+            }
+
+            // means that we're actually a function
+            if found_identifier {
+                node.set_type(Function);
             }
         }
 

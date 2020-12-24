@@ -46,4 +46,8 @@ impl ParserNode {
     pub fn add_token(&mut self, token: Token) {
         self.tokens.push(token);
     }
+
+    pub fn set_type(&mut self, node_type: ParserNodeType) {
+        self.node_type = node_type
+    }
 }
