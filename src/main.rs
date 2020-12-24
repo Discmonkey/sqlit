@@ -24,8 +24,8 @@ fn main() -> std::io::Result<()> {
     let parser = parser::rdp::RecursiveDescentParser{};
 
     while let linefeed::ReadResult::Input(input) = io.read_line()? {
-        if input.len() == 0 {
-            continue
+        if input.trim().len() == 0 {
+            continue;
         } else {
             io.add_history(input.trim().to_string());
         }
