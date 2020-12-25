@@ -86,7 +86,7 @@ fn write_to_vec(offsets: &mut Vec<Vec<usize>>,
     node.children.iter().for_each(|child| {
         let row = coord.row + 1;
         let column = column_counters[row];
-        write_to_vec(offsets, writes, column_counters, child.as_ref(), Coord {
+        write_to_vec(offsets, writes, column_counters, child, Coord {
             row, column
         });
 

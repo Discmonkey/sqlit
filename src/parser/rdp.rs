@@ -113,7 +113,7 @@ impl RecursiveDescentParser {
         node.add_child(self.parse_expression()?);
 
         while self.next_token_is(",") {
-            tokens.pop_front();
+            self.tokens.pop_front();
             node.add_child(self.parse_expression()?);
         }
 
@@ -136,9 +136,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_comparison()?);
 
-        while let Some(t) = tokens.front() {
+        while let Some(t) = self.tokens.front() {
             if t.is("!=") || t.is("=") {
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_comparison()?);
             } else {
                 break;
@@ -153,9 +153,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_term()?);
 
-        while let Some(t) = tokens.front() {
+        while let Some(t) = self.tokens.front() {
             if t.is(">") || t.is(">=") || t.is("<") || t.is("<=") {
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_term()?);
             } else {
                 break;
@@ -170,9 +170,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_factor()?);
 
-        while let Some(t) = tokens.front() {
+        while let Some(t) = self.tokens.front() {
             if t.is("-") || t.is("+") {
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_factor()?);
             } else {
                 break;
@@ -187,9 +187,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_unary()?);
 
-        while let Some(t) = tokens.front() {
+        while let Some(t) = self.tokens.front() {
             if t.is("/") || t.is("*") {
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_unary()?);
             } else {
                 break;
@@ -202,9 +202,9 @@ impl RecursiveDescentParser {
     fn parse_unary(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Unary);
 
-        while let Some(t) = tokens.front() {
+        while let Some(t) = self.tokens.front() {
             if t.is("!") || t.is("-") {
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_unary()?);
             } else {
                 node.add_child(self.parse_primary()?);
@@ -220,13 +220,13 @@ impl RecursiveDescentParser {
         let mut found_identifier = false;
 
         if self.next_token_type_is(Literal) {
-            node.add_token(tokens.pop_front().unwrap());
+            node.add_token(self.tokens.pop_front().unwrap());
 
             return Ok(node);
         }
 
         if self.next_token_type_is(Identifier)  {
-            node.add_token(tokens.pop_front().unwrap());
+            node.add_token(self.tokens.pop_front().unwrap());
             found_identifier = true;
         }
 
@@ -235,7 +235,7 @@ impl RecursiveDescentParser {
                 node.set_type(Function);
             }
 
-            tokens.pop_front();
+            self.tokens.pop_front();
 
             if self.next_token_is("select") {
                 node.add_child(self.parse_query()?);
@@ -262,21 +262,21 @@ impl RecursiveDescentParser {
         let mut node = ParserNode::new(ParserNodeType::Table);
 
         loop {
-            let next = tokens.front().unwrap();
+            let next = self.tokens.front().unwrap();
 
             if next.is_type(Identifier) {
-                node.add_token(tokens.pop_front().unwrap())
+                node.add_token(self.tokens.pop_front().unwrap())
             } else if next.is("(") {
-                tokens.pop_front();
+                self.tokens.pop_front();
                 node.add_child(self.parse_query()?);
 
-                let closing = tokens.pop_front().unwrap();
+                let closing = self.tokens.pop_front().unwrap();
 
                 if !closing.is(")") {
                     return Err(SqlError::new("missing closing paren", Syntax));
                 }
 
-                let identifier_required = tokens.pop_front().unwrap();
+                let identifier_required = self.tokens.pop_front().unwrap();
 
                 if !identifier_required.is_type(Identifier) {
                     return Err(SqlError::new("expected identifier after query", Syntax));
@@ -285,14 +285,14 @@ impl RecursiveDescentParser {
                 node.add_token(identifier_required);
             }
 
-            let maybe_join = tokens.front();
+            let maybe_join = self.tokens.front();
 
             if let Some(t) = maybe_join {
                 if !t.is("left join") && !t.is("inner join") {
                     break;
                 }
 
-                node.add_token(tokens.pop_front().unwrap());
+                node.add_token(self.tokens.pop_front().unwrap());
             } else {
                 break;
             }
@@ -334,8 +334,8 @@ impl RecursiveDescentParser {
     fn parse_order_by(&mut self) -> ParserResult {
         let mut node = ParserNode::new(OrderBy);
 
-        self.get_required_token_by_value("group by",
-                                         "group by keyword required");
+        self.get_required_token_by_value("order by",
+                                         "order by keyword required");
 
         node.add_child(self.parse_order_by_statement()?);
 
@@ -362,7 +362,7 @@ impl RecursiveDescentParser {
     fn parse_into(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Into);
 
-        if let Some(t) = tokens.front() {
+        if let Some(t) = self.tokens.front() {
             if !t.is("into") {
                 return Err(SqlError::new("expected order by clause", Syntax));
             }
@@ -371,10 +371,10 @@ impl RecursiveDescentParser {
         }
 
         // skip into
-        tokens.pop_front().unwrap();
+        self.tokens.pop_front().unwrap();
 
         // go ahead and add the identifier
-        node.add_token(tokens.pop_front().unwrap());
+        node.add_token(self.tokens.pop_front().unwrap());
 
         Ok(node)
     }
@@ -388,12 +388,8 @@ mod test {
     #[test]
     fn tokenize_basic_select() {
         let t = Tokenizer::new();
-        let p = RecursiveDescentParser{};
-
-
         let mut tokens = t.tokenize("SELECT a, b, c FROM table".to_string()).unwrap();
-
-        let maybe_tree = p.parse(&mut tokens);
+        let maybe_tree = RecursiveDescentParser::new(tokens).parse();
 
         match maybe_tree {
             Err(_e) => assert!(false),

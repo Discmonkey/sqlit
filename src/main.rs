@@ -11,6 +11,7 @@ mod eval;
 
 use linefeed;
 use std::io;
+use crate::parser::rdp::RecursiveDescentParser;
 
 fn main() -> std::io::Result<()> {
 
@@ -18,7 +19,6 @@ fn main() -> std::io::Result<()> {
     io.set_prompt("sqlit> ");
 
     let toke = tokenizer::Tokenizer::new();
-    let parser = parser::rdp::RecursiveDescentParser{};
 
     while let linefeed::ReadResult::Input(input) = io.read_line()? {
         if input.trim().len() == 0 {
@@ -28,11 +28,11 @@ fn main() -> std::io::Result<()> {
         }
 
         let tokens = toke.tokenize(input);
-
         match tokens {
             Err(e) => println!("{}", e),
             Ok(mut tokens) => {
-                let parse_result = parser.parse(&mut tokens);
+                let mut parser = RecursiveDescentParser::new(tokens);
+                let parse_result = parser.parse();
 
                 match parse_result {
                     Err(e) => println!("{}", e),
