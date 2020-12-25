@@ -20,6 +20,7 @@ pub enum ParserNodeType {
     Where,
     GroupBy,
     OrderBy,
+    OrderByStatement,
     Into,
     Target,
 }
@@ -27,7 +28,7 @@ pub enum ParserNodeType {
 pub struct ParserNode {
     node_type: ParserNodeType,
     tokens: Vec<Token>, // in the case of certain operations / * +, a function call, etc
-    children: Vec<Box<ParserNode>>,
+    children: Vec<ParserNode>,
 }
 
 impl ParserNode {
@@ -39,7 +40,7 @@ impl ParserNode {
         }
     }
 
-    pub fn add_child(&mut self, node: Box<ParserNode>) {
+    pub fn add_child(&mut self, node: ParserNode) {
         self.children.push(node);
     }
 

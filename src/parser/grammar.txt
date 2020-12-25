@@ -1,5 +1,6 @@
 #### sqlit grammar
 
+
 // main entry point
 query:
     SELECT <columns> (<from>)? (<where>)? (<group by>)? (<order by>)? (<into>)?
@@ -39,10 +40,13 @@ where:
     WHERE <expression>
 
 group by:
-    GROUP BY <columns>
+    GROUP BY identifier (, identifier)*
 
 order by:
-    ORDER BY <columns>
+    ORDER BY <order_by_statement>
+
+order_by_statement:
+    identifier (ASC | DESC)?
 
 into:
     INTO <target>

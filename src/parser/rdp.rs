@@ -1,37 +1,86 @@
-use crate::tokenizer::{Tokens};
+use crate::tokenizer::{Tokens, Token, TokenType};
 use crate::result::{SqlError, SqlResult};
 use crate::result::ErrorType::Syntax;
 use crate::tokenizer::TokenType::{Identifier, Literal};
 use crate::parser::rdp::ParserNodeType::{Where, GroupBy, OrderBy};
 use crate::parser::{ParserNode, ParserNodeType};
-use crate::parser::ParserNodeType::Function;
+use crate::parser::ParserNodeType::{Function, OrderByStatement};
 
-pub struct RecursiveDescentParser {}
+pub struct RecursiveDescentParser {
+    tokens: Tokens,
+}
 
-type ParserResult = SqlResult<Box<ParserNode>>;
+type ParserResult = SqlResult<ParserNode>;
 
 impl RecursiveDescentParser {
 
-    pub fn parse(&self, tokens: &mut Tokens) -> ParserResult {
-        self.parse_query(tokens)
+    pub fn new(tokens: Tokens) -> Self {
+        RecursiveDescentParser {
+            tokens
+        }
     }
 
-    fn parse_query(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Query));
-        // always consume the next token
-        let token = tokens.pop_front().unwrap();
+    pub fn parse(&mut self) -> ParserResult {
+        self.parse_query()
+    }
 
-        if !token.is("select") {
-            return Err(SqlError::new("invalid select statement", Syntax))
+    fn next_token_is(&self, value: &str) -> bool {
+        match self.tokens.front() {
+            Some(t) => t.is(value),
+            None => false
         }
+    }
+
+    fn next_token_type_is(&self, type_: TokenType) -> bool {
+        match self.tokens.front() {
+            Some(t) => t.is_type(type_),
+            None => false
+        }
+    }
+
+    fn get_required_token_by_type(&mut self,
+                                  token_type: TokenType,
+                                  err_message: &str) -> Result<Token, SqlError> {
+
+        match self.tokens.pop_front() {
+            None => Err(SqlError::new(err_message, Syntax)),
+            Some(t) => {
+                if t.is_type(token_type) {
+                    Ok(t)
+                } else {
+                    Err(SqlError::new(err_message, Syntax))
+                }
+            }
+        }
+    }
+
+    fn get_required_token_by_value(&mut self,
+                                   token_value: &str,
+                                   err_message: &str) -> Result<Token, SqlError> {
+        match self.tokens.pop_front() {
+            None => Err(SqlError::new(err_message, Syntax)),
+            Some(t) => {
+                if t.is(token_value) {
+                    Ok(t)
+                } else {
+                    Err(SqlError::new(err_message, Syntax))
+                }
+            }
+        }
+    }
+
+    fn parse_query(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Query);
+        // always consume the next token
+        self.get_required_token_by_value("select", "query must begin with select")?;
 
         // columns are required
-        node.add_child(self.parse_columns(tokens)?);
+        node.add_child(self.parse_columns()?);
 
         let optional_clauses = vec!("from", "where", "group by", "order by", "into");
         let mut current_index = 0;
 
-        while let Some(token) = tokens.front() {
+        while let Some(token) = self.tokens.front() {
             let index = optional_clauses.iter().position(|s| { token.is(s) });
 
             match index {
@@ -43,11 +92,11 @@ impl RecursiveDescentParser {
                     current_index = i;
 
                     match optional_clauses[current_index] {
-                        "from" => node.add_child(self.parse_from(tokens)?),
-                        "where" => node.add_child(self.parse_where(tokens)?),
-                        "group by" => node.add_child(self.parse_group_by(tokens)?),
-                        "order by" => node.add_child(self.parse_order_by(tokens)?),
-                        "into" => node.add_child(self.parse_into(tokens)?),
+                        "from" => node.add_child(self.parse_from()?),
+                        "where" => node.add_child(self.parse_where()?),
+                        "group by" => node.add_child(self.parse_group_by()?),
+                        "order by" => node.add_child(self.parse_order_by()?),
+                        "into" => node.add_child(self.parse_into()?),
                         _ => ()
                     }
                 }
@@ -58,27 +107,22 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_columns(&self, tokens: &mut Tokens) -> ParserResult {
+    fn parse_columns(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Columns);
 
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Columns));
+        node.add_child(self.parse_expression()?);
 
-        node.add_child(self.parse_expression(tokens)?);
-
-        while let Some(t) = tokens.front() {
-            if t.is(",") {
-                tokens.pop_front();
-                node.add_child(self.parse_expression(tokens)?);
-            } else {
-                break;
-            }
+        while self.next_token_is(",") {
+            tokens.pop_front();
+            node.add_child(self.parse_expression()?);
         }
 
         Ok(node)
     }
 
     // expression is used for readability but does not actually produce a node, making the walk a bit easier
-    fn parse_expression(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut tree = self.parse_equality(tokens)?;
+    fn parse_expression(&mut self) -> ParserResult {
+        let mut tree = self.parse_equality()?;
 
         while tree.children.len() == 1 && tree.tokens.len() == 0 {
             tree = tree.children.pop().unwrap();
@@ -87,15 +131,15 @@ impl RecursiveDescentParser {
         Ok(tree)
     }
 
-    fn parse_equality(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Equality));
+    fn parse_equality(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Equality);
 
-        node.add_child(self.parse_comparison(tokens)?);
+        node.add_child(self.parse_comparison()?);
 
         while let Some(t) = tokens.front() {
             if t.is("!=") || t.is("=") {
                 node.add_token(tokens.pop_front().unwrap());
-                node.add_child(self.parse_comparison(tokens)?);
+                node.add_child(self.parse_comparison()?);
             } else {
                 break;
             }
@@ -104,15 +148,15 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_comparison(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Comparison));
+    fn parse_comparison(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Comparison);
 
-        node.add_child(self.parse_term(tokens)?);
+        node.add_child(self.parse_term()?);
 
         while let Some(t) = tokens.front() {
             if t.is(">") || t.is(">=") || t.is("<") || t.is("<=") {
                 node.add_token(tokens.pop_front().unwrap());
-                node.add_child(self.parse_term(tokens)?);
+                node.add_child(self.parse_term()?);
             } else {
                 break;
             }
@@ -121,15 +165,15 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_term(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Term));
+    fn parse_term(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Term);
 
-        node.add_child(self.parse_factor(tokens)?);
+        node.add_child(self.parse_factor()?);
 
         while let Some(t) = tokens.front() {
             if t.is("-") || t.is("+") {
                 node.add_token(tokens.pop_front().unwrap());
-                node.add_child(self.parse_factor(tokens)?);
+                node.add_child(self.parse_factor()?);
             } else {
                 break;
             }
@@ -138,15 +182,15 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_factor(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Factor));
+    fn parse_factor(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Factor);
 
-        node.add_child(self.parse_unary(tokens)?);
+        node.add_child(self.parse_unary()?);
 
         while let Some(t) = tokens.front() {
             if t.is("/") || t.is("*") {
                 node.add_token(tokens.pop_front().unwrap());
-                node.add_child(self.parse_unary(tokens)?);
+                node.add_child(self.parse_unary()?);
             } else {
                 break;
             }
@@ -155,15 +199,15 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_unary(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Unary));
+    fn parse_unary(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Unary);
 
         while let Some(t) = tokens.front() {
             if t.is("!") || t.is("-") {
                 node.add_token(tokens.pop_front().unwrap());
-                node.add_child(self.parse_unary(tokens)?);
+                node.add_child(self.parse_unary()?);
             } else {
-                node.add_child(self.parse_primary(tokens)?);
+                node.add_child(self.parse_primary()?);
                 break;
             }
         }
@@ -171,64 +215,51 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_primary(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Primary));
+    fn parse_primary(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Primary);
         let mut found_identifier = false;
 
-        if let Some(t) = tokens.front() {
-            if t.get_type() == Literal {
-                node.add_token(tokens.pop_front().unwrap());
+        if self.next_token_type_is(Literal) {
+            node.add_token(tokens.pop_front().unwrap());
 
-                return Ok(node);
-            }
-
-            if t.get_type() == Identifier {
-                node.add_token(tokens.pop_front().unwrap());
-                found_identifier = true;
-            }
+            return Ok(node);
         }
 
-        if tokens.len() > 0 && tokens.front().unwrap().is("(") {
-            tokens.pop_front();
+        if self.next_token_type_is(Identifier)  {
+            node.add_token(tokens.pop_front().unwrap());
+            found_identifier = true;
+        }
 
-            let next = tokens.front().unwrap();
-
-            if next.is("select") {
-                node.add_child(self.parse_query(tokens)?);
-            } else {
-                node.add_child(self.parse_expression(tokens)?);
-            }
-
-            if tokens.len() > 0 && tokens.front().unwrap().is(")") {
-                tokens.pop_front();
-            } else {
-                return Err(SqlError::new("non terminated paren", Syntax));
-            }
-
-            // means that we're actually a function
+        if self.next_token_is("(") {
             if found_identifier {
                 node.set_type(Function);
             }
+
+            tokens.pop_front();
+
+            if self.next_token_is("select") {
+                node.add_child(self.parse_query()?);
+            } else {
+                node.add_child(self.parse_expression()?);
+            }
+
+            self.get_required_token_by_value(")", "non-terminated paren")?;
         }
 
         Ok(node)
     }
 
-    fn parse_from(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::From));
-        let next = tokens.pop_front().unwrap();
+    fn parse_from(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::From);
+        self.get_required_token_by_value("from", "missing from statement")?;
 
-        if !next.is("from") {
-            return Err(SqlError::new("mis-configured from statement", Syntax));
-        }
-
-        node.add_child(self.parse_table(tokens)?);
+        node.add_child(self.parse_table()?);
 
         Ok(node)
     }
 
-    fn parse_table(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Table));
+    fn parse_table(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Table);
 
         loop {
             let next = tokens.front().unwrap();
@@ -237,7 +268,7 @@ impl RecursiveDescentParser {
                 node.add_token(tokens.pop_front().unwrap())
             } else if next.is("(") {
                 tokens.pop_front();
-                node.add_child(self.parse_query(tokens)?);
+                node.add_child(self.parse_query()?);
 
                 let closing = tokens.pop_front().unwrap();
 
@@ -270,62 +301,66 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_where(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(Where));
+    fn parse_where(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(Where);
 
-        if let Some(t) = tokens.front() {
-            if !t.is("where") {
-                return Err(SqlError::new("expected where clause", Syntax));
-            }
-        } else {
-            return Err(SqlError::new("empty token stream passed to where parser", Syntax));
-        }
+        self.get_required_token_by_value("where", "invalid where clause")?;
 
-        tokens.pop_front().unwrap();
-
-        node.add_child(self.parse_expression(tokens)?);
+        node.add_child(self.parse_expression()?);
 
         Ok(node)
     }
 
-    fn parse_group_by(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(GroupBy));
+    fn parse_group_by(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(GroupBy);
 
-        if let Some(t) = tokens.front() {
-            if !t.is("group by") {
-                return Err(SqlError::new("expected group by clause", Syntax));
-            }
-        } else {
-            return Err(SqlError::new("empty token stream passed to where parser", Syntax));
+        self.get_required_token_by_value("group by",
+                                         "group by keyword required");
+
+        node.add_token(self.get_required_token_by_type(Identifier,
+                                        "group by requires at least one column name")?);
+
+        while self.next_token_is(",") {
+            self.tokens.pop_front();
+
+            node.add_token(self.get_required_token_by_type(Identifier,
+                "malformed group by clause, can only only group on columns")?
+            )
         }
-
-        tokens.pop_front().unwrap();
-
-        node.add_child(self.parse_columns(tokens)?);
 
         Ok(node)
     }
 
-    fn parse_order_by(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(OrderBy));
+    fn parse_order_by(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(OrderBy);
 
-        if let Some(t) = tokens.front() {
-            if !t.is("group by") {
-                return Err(SqlError::new("expected order by clause", Syntax));
-            }
-        } else {
-            return Err(SqlError::new("empty token stream passed to where parser", Syntax));
+        self.get_required_token_by_value("group by",
+                                         "group by keyword required");
+
+        node.add_child(self.parse_order_by_statement()?);
+
+        while self.next_token_is(",") {
+            self.tokens.pop_front();
+            node.add_child(self.parse_order_by_statement()?);
         }
-
-        tokens.pop_front().unwrap();
-
-        node.add_child(self.parse_columns(tokens)?);
 
         Ok(node)
     }
 
-    fn parse_into(&self, tokens: &mut Tokens) -> ParserResult {
-        let mut node = Box::new(ParserNode::new(ParserNodeType::Into));
+    fn parse_order_by_statement(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(OrderByStatement);
+
+        node.add_token(self.get_required_token_by_type(Identifier, "can only order on columns")?);
+
+        if self.next_token_is("ASC") || self.next_token_is("DESC") {
+            node.add_token(self.tokens.pop_front().unwrap())
+        }
+
+        Ok(node)
+    }
+
+    fn parse_into(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Into);
 
         if let Some(t) = tokens.front() {
             if !t.is("into") {

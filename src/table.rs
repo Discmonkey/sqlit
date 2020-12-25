@@ -4,13 +4,18 @@ use std::fs::File;
 use std::io::{BufRead};
 use rayon::prelude::*;
 use crate::build_column::build_column;
+use crate::column::Column;
 
 pub struct Table {
-    column_list: Vec<String>, // list of columns names
+    column_names: Vec<String>, // list of columns names
     column_map: HashMap<String, usize>, // a map of column names to indices
     columns: Vec<column::Column>, // the actual data
     num_rows: usize, // number of rows in the table
 }
+
+pub type TableContext = HashMap<String, Table>;
+
+
 
 // trim string from white spaces, also replace "|' from first and last characters
 fn clean(raw: &str) -> String {
@@ -28,8 +33,24 @@ fn clean(raw: &str) -> String {
     s
 }
 
-fn parse_line(header_line: String) -> Vec<String> {
-    header_line.split(",").map(clean).collect()
+fn parse_line(line: String) -> Vec<String> {
+    line.split(",").map(clean).collect()
+}
+
+fn parse_header_line(header_line: String) -> Vec<String> {
+    parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
+        if s.len() == 0 {
+            num.to_string()
+        } else {
+            s
+        }
+    }).collect()
+}
+
+fn create_column_map(column_names: &Vec<String>) -> HashMap<String, usize> {
+    column_names.iter().enumerate().map(|(index, name)| {
+        (name.clone(), index)
+    }).collect()
 }
 
 impl Table {
@@ -44,21 +65,12 @@ impl Table {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"));
         }
 
+        // unwrap the option maybe forward the result
         let header_line = maybe_column_line.unwrap()?;
+        let column_names = parse_header_line(header_line);
+        let column_map = create_column_map(&column_names);
 
-        let column_list: Vec<String> = parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
-            if s.len() == 0 {
-                num.to_string()
-            } else {
-                s
-            }
-        }).collect();
-
-        let column_map: HashMap<String, usize> = column_list.iter().enumerate().map(|(index, name)| {
-            (name.clone(), index)
-        }).collect();
-
-        let mut raw_string_columns: Vec<Vec<String>> = column_list.iter().map(|_| Vec::new()).collect();
+        let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
         let mut num_rows = 0;
         for line in lines {
@@ -74,15 +86,25 @@ impl Table {
 
 
         Ok(Table {
-            column_map, column_list, columns, num_rows
+            column_map, column_names, columns, num_rows
         })
 
 
     }
 
+    pub fn column(&self, name: &str) -> Option<&Column> {
+        let index = self.column_map.get(name)?.clone();
+        Some(&self.columns[index])
+    }
+
     pub fn len(&self) -> usize {
         self.num_rows
     }
+
+    pub fn width(&self) -> usize {
+        self.column_names.len()
+    }
+
 
 }
 
