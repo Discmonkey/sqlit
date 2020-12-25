@@ -1,15 +1,13 @@
-mod schema;
 mod column;
 mod ast;
 mod table;
 mod tokenizer;
 mod result;
-mod select;
-mod scalar;
 mod ops;
 mod converters;
 mod build_column;
 mod parser;
+mod eval;
 
 use linefeed;
 use std::io;
@@ -18,7 +16,6 @@ fn main() -> std::io::Result<()> {
 
     let mut io = linefeed::Interface::new("sqlit")?;
     io.set_prompt("sqlit> ");
-    io.set_completer(std::sync::Arc::new(linefeed::complete::PathCompleter));
 
     let toke = tokenizer::Tokenizer::new();
     let parser = parser::rdp::RecursiveDescentParser{};
