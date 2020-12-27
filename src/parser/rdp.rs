@@ -54,6 +54,11 @@ impl RecursiveDescentParser {
         }
     }
 
+    /// get the next token unsafely
+    fn next(&mut self) -> Token {
+        self.tokens.pop_front().unwrap()
+    }
+
     fn get_required_token_by_value(&mut self,
                                    token_value: &str,
                                    err_message: &str) -> Result<Token, SqlError> {
@@ -136,13 +141,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_comparison()?);
 
-        while let Some(t) = self.tokens.front() {
-            if t.is("!=") || t.is("=") {
-                node.add_token(self.tokens.pop_front().unwrap());
-                node.add_child(self.parse_comparison()?);
-            } else {
-                break;
-            }
+        while self.next_token_is("!=") || self.next_token_is("=") {
+            node.add_token(self.tokens.pop_front().unwrap());
+            node.add_child(self.parse_comparison()?);
         }
 
         Ok(node)
@@ -153,13 +154,9 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_term()?);
 
-        while let Some(t) = self.tokens.front() {
-            if t.is(">") || t.is(">=") || t.is("<") || t.is("<=") {
-                node.add_token(self.tokens.pop_front().unwrap());
-                node.add_child(self.parse_term()?);
-            } else {
-                break;
-            }
+        while [">", ">=", "<", "<="].iter().any(|val| self.next_token_is(val)) {
+            node.add_token(self.tokens.pop_front().unwrap());
+            node.add_child(self.parse_term()?);
         }
 
         Ok(node)
@@ -202,31 +199,29 @@ impl RecursiveDescentParser {
     fn parse_unary(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Unary);
 
-        while let Some(t) = self.tokens.front() {
-            if t.is("!") || t.is("-") {
-                node.add_token(self.tokens.pop_front().unwrap());
-                node.add_child(self.parse_unary()?);
-            } else {
-                node.add_child(self.parse_primary()?);
-                break;
-            }
+        if self.next_token_is("-") || self.next_token_is("!") {
+            node.add_token(self.next());
+            node.add_child(self.parse_unary()?);
+        } else {
+            node.add_child(self.parse_primary()?);
         }
 
         Ok(node)
     }
 
     fn parse_primary(&mut self) -> ParserResult {
+
         let mut node = ParserNode::new(ParserNodeType::Primary);
         let mut found_identifier = false;
 
         if self.next_token_type_is(Literal) {
-            node.add_token(self.tokens.pop_front().unwrap());
+            node.add_token(self.next());
 
             return Ok(node);
         }
 
         if self.next_token_type_is(Identifier)  {
-            node.add_token(self.tokens.pop_front().unwrap());
+            node.add_token(self.next());
             found_identifier = true;
         }
 
@@ -246,57 +241,52 @@ impl RecursiveDescentParser {
             self.get_required_token_by_value(")", "non-terminated paren")?;
         }
 
-        Ok(node)
+        // need to work on primary parsing
+        if node.tokens.is_empty() && node.children.is_empty() {
+            Err(SqlError::new("missing expression", Syntax))
+        } else {
+            Ok(node)
+        }
     }
 
     fn parse_from(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::From);
-        self.get_required_token_by_value("from", "missing from statement")?;
+        self.get_required_token_by_value("from", "malformed from clause")?;
 
-        node.add_child(self.parse_table()?);
+        node.add_child(self.parse_from_statement()?);
+
+        while ["left join", "right join"].iter().any(|s| self.next_token_is(s)) {
+
+            // need the token due to different rules for joins
+            node.add_token(self.next());
+
+            // the table / query we are joining
+            node.add_child(self.parse_from_statement()?);
+
+            self.get_required_token_by_value("on",
+                                             "join condition starting with on is required")?;
+
+            // the condition we are joining it on
+            node.add_child(self.parse_expression()?);
+        }
 
         Ok(node)
     }
 
-    fn parse_table(&mut self) -> ParserResult {
-        let mut node = ParserNode::new(ParserNodeType::Table);
+    fn parse_from_statement(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::FromStatement);
 
-        loop {
-            let next = self.tokens.front().unwrap();
+        if self.next_token_is("(") {
+            self.next();
 
-            if next.is_type(Identifier) {
-                node.add_token(self.tokens.pop_front().unwrap())
-            } else if next.is("(") {
-                self.tokens.pop_front();
-                node.add_child(self.parse_query()?);
+            node.add_child(self.parse_query()?);
 
-                let closing = self.tokens.pop_front().unwrap();
-
-                if !closing.is(")") {
-                    return Err(SqlError::new("missing closing paren", Syntax));
-                }
-
-                let identifier_required = self.tokens.pop_front().unwrap();
-
-                if !identifier_required.is_type(Identifier) {
-                    return Err(SqlError::new("expected identifier after query", Syntax));
-                }
-
-                node.add_token(identifier_required);
-            }
-
-            let maybe_join = self.tokens.front();
-
-            if let Some(t) = maybe_join {
-                if !t.is("left join") && !t.is("inner join") {
-                    break;
-                }
-
-                node.add_token(self.tokens.pop_front().unwrap());
-            } else {
-                break;
-            }
+            self.get_required_token_by_value(")",
+                                             "non-terminated paren in from statement")?;
         }
+
+        node.add_token(self.get_required_token_by_type(Identifier,
+                                                       "name required for join table")?);
 
         Ok(node)
     }
@@ -321,7 +311,7 @@ impl RecursiveDescentParser {
                                         "group by requires at least one column name")?);
 
         while self.next_token_is(",") {
-            self.tokens.pop_front();
+            self.next();
 
             node.add_token(self.get_required_token_by_type(Identifier,
                 "malformed group by clause, can only only group on columns")?

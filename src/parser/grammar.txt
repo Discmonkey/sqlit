@@ -5,9 +5,6 @@
 query:
     SELECT <columns> (<from>)? (<where>)? (<group by>)? (<order by>)? (<into>)?
 
-table:
-    identifier | '(' <query> ')' identifier (LEFT JOIN | INNER JOIN table)*
-
 columns:
     <expression> (, <expression>)*
 
@@ -34,7 +31,10 @@ primary:
     literal | identifier ("(" expression | query ")")? | "(" expression | query ")"
 
 from:
-    FROM <table>
+    FROM <from_statement> (LEFT JOIN | INNER JOIN <from_statement> on <expression>
+
+from_statement:
+    '(' query ')' identifier | identifier
 
 where:
     WHERE <expression>

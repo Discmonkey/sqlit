@@ -6,7 +6,6 @@ pub mod display;
 #[derive(Debug)]
 pub enum ParserNodeType {
     Query,
-    Table,
     Columns,
     Expression,
     Equality,
@@ -17,6 +16,7 @@ pub enum ParserNodeType {
     Function,
     Primary,
     From,
+    FromStatement,
     Where,
     GroupBy,
     OrderBy,
