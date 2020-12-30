@@ -8,6 +8,6 @@ pub struct Ast {
 }
 
 pub enum AstNode {
-    Ast(Box<Ast>),
+    Ast(Ast),
     Result(SqlResult<Evaluated>)
 }
