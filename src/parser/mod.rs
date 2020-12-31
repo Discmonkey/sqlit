@@ -48,7 +48,21 @@ impl ParserNode {
         self.tokens.push(token);
     }
 
+    pub fn node_type(&self) -> &ParserNodeType {
+        &self.node_type
+    }
+
+    pub fn get_children(&self) -> &Vec<ParserNode> {
+        &self.children
+    }
+
+    pub fn get_tokens(&self) -> &Vec<Token> {
+        &self.tokens
+    }
+
     pub fn set_type(&mut self, node_type: ParserNodeType) {
         self.node_type = node_type
     }
+
+
 }
