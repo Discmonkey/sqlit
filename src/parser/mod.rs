@@ -1,9 +1,9 @@
-use crate::tokenizer::Token;
+use crate::tokenizer::{Token, TokenType};
 
 pub mod rdp;
 pub mod display;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParserNodeType {
     Query,
     Columns,
@@ -60,8 +60,16 @@ impl ParserNode {
         &self.tokens
     }
 
+    pub fn get_type(&self) -> &ParserNodeType {
+        &self.node_type
+    }
+
     pub fn set_type(&mut self, node_type: ParserNodeType) {
         self.node_type = node_type
+    }
+
+    pub fn release(self) -> (ParserNodeType, Vec<Token>, Vec<ParserNode>) {
+        return (self.node_type, self.tokens, self.children)
     }
 
 
