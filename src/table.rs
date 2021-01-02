@@ -6,11 +6,13 @@ use rayon::prelude::*;
 use crate::build_column::build_column;
 use crate::column::Column;
 
+#[derive(Clone)]
 pub struct Table {
     column_names: Vec<String>, // list of columns names
     column_map: HashMap<String, usize>, // a map of column names to indices
     columns: Vec<column::Column>, // the actual data
     num_rows: usize, // number of rows in the table
+    alias: String, // the current name / alias for the table
 }
 
 pub type TableContext = HashMap<String, Table>;
@@ -55,6 +57,16 @@ fn create_column_map(column_names: &Vec<String>) -> HashMap<String, usize> {
 
 impl Table {
 
+    pub fn new() -> Self {
+        Table {
+            columns: Vec::new(),
+            num_rows: 0,
+            column_map: HashMap::new(),
+            column_names: Vec::new(),
+            alias: "".to_string(),
+        }
+    }
+
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
@@ -88,8 +100,6 @@ impl Table {
         Ok(Table {
             column_map, column_names, columns, num_rows
         })
-
-
     }
 
     pub fn column(&self, name: &str) -> Option<&Column> {

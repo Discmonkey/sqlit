@@ -10,6 +10,7 @@ pub enum Evaluated {
 pub enum ErrorType {
     Syntax,
     Type,
+    Lookup,
 }
 
 pub struct SqlError {

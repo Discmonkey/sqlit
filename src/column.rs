@@ -2,6 +2,7 @@ use Vec;
 
 pub type DateTime = i64;
 
+#[derive(Clone)]
 pub enum Column {
     Floats(Vec<f64>),
     Ints(Vec<i64>),

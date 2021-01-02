@@ -130,7 +130,7 @@ impl RecursiveDescentParser {
         let mut tree = self.parse_equality()?;
 
         while tree.children.len() == 1 && tree.tokens.len() == 0 {
-            tree = tree.children.pop().unwrap();
+            tree = tree.children.pop_back().unwrap();
         }
 
         Ok(tree)
