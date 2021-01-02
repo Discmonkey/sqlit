@@ -3,20 +3,19 @@ use crate::column;
 use std::fs::File;
 use std::io::{BufRead};
 use rayon::prelude::*;
+use std::path::Path;
 use crate::build_column::build_column;
 use crate::column::Column;
 
 #[derive(Clone)]
 pub struct Table {
     column_names: Vec<String>, // list of columns names
-    column_map: HashMap<String, usize>, // a map of column names to indices
+    column_map: HashMap<(String, String), usize>, // a map of (table, column name) to indices
     columns: Vec<column::Column>, // the actual data
     num_rows: usize, // number of rows in the table
-    alias: String, // the current name / alias for the table
 }
 
 pub type TableContext = HashMap<String, Table>;
-
 
 
 // trim string from white spaces, also replace "|' from first and last characters
@@ -28,7 +27,7 @@ fn clean(raw: &str) -> String {
         })
         .collect();
 
-    if s.ends_with(&"\"") || s.ends_with(&"\'") {
+    while s.ends_with(&"\"") || s.ends_with(&"\'") {
         s.truncate(s.len() - 1)
     }
 
@@ -49,10 +48,15 @@ fn parse_header_line(header_line: String) -> Vec<String> {
     }).collect()
 }
 
-fn create_column_map(column_names: &Vec<String>) -> HashMap<String, usize> {
+fn create_column_map(table_name: String, column_names: &Vec<String>) -> HashMap<String, usize> {
     column_names.iter().enumerate().map(|(index, name)| {
-        (name.clone(), index)
+        ((table_name, name.clone()), index)
     }).collect()
+}
+
+/// from the path to the table, grabs the file name minus the extention 
+fn extract_table_name(file_path: &str) -> String {
+    let re = Regex::new(r"(\d{4})-(\d{2})-(\d{2})\.*^").unwrap();
 }
 
 impl Table {
@@ -63,11 +67,12 @@ impl Table {
             num_rows: 0,
             column_map: HashMap::new(),
             column_names: Vec::new(),
-            alias: "".to_string(),
         }
     }
 
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
+
+
         let f = File::open(file_location)?;
 
         let mut lines = std::io::BufReader::new(f).lines();
