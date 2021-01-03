@@ -16,6 +16,8 @@ pub enum ParserNodeType {
     Unary,
     Function,
     Primary,
+    PrimaryIdentifier,
+    QualifiedIdentifier,
     From,
     FromStatement,
     Where,

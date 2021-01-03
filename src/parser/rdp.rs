@@ -10,6 +10,8 @@ pub struct RecursiveDescentParser {
     tokens: Tokens,
 }
 
+const PAREN_ERROR: &str = "un-terminated paren";
+
 type ParserResult = SqlResult<ParserNode>;
 
 impl RecursiveDescentParser {
@@ -212,24 +214,12 @@ impl RecursiveDescentParser {
     fn parse_primary(&mut self) -> ParserResult {
 
         let mut node = ParserNode::new(ParserNodeType::Primary);
-        let mut found_identifier = false;
 
         if self.next_token_type_is(Literal) {
             node.add_token(self.next());
-
-            return Ok(node);
-        }
-
-        if self.next_token_type_is(Identifier)  {
-            node.add_token(self.next());
-            found_identifier = true;
-        }
-
-        if self.next_token_is("(") {
-            if found_identifier {
-                node.set_type(Function);
-            }
-
+        } else if self.next_token_type_is(Identifier)  {
+            node.add_child(self.parse_primary_identifier()?)
+        } else if self.next_token_is("(") {
             self.tokens.pop_front();
 
             if self.next_token_is("select") {
@@ -238,15 +228,49 @@ impl RecursiveDescentParser {
                 node.add_child(self.parse_expression()?);
             }
 
-            self.get_required_token_by_value(")", "non-terminated paren")?;
+            self.get_required_token_by_value(")", PAREN_ERROR)?;
+        } else {
+            return Err(SqlError::new("missing expression", Syntax));
         }
 
-        // need to work on primary parsing
-        if node.tokens.is_empty() && node.children.is_empty() {
-            Err(SqlError::new("missing expression", Syntax))
-        } else {
-            Ok(node)
+        Ok(node)
+    }
+
+    fn parse_primary_identifier(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::PrimaryIdentifier);
+
+        node.add_child(self.parse_qualified_identifier()?);
+
+        if self.next_token_is( "("){
+            node.set_type(Function);
+
+            self.next();
+
+            node.add_child(self.parse_expression()?);
+
+            self.get_required_token_by_value(")", PAREN_ERROR)?;
         }
+
+        Ok(node)
+    }
+
+    fn parse_qualified_identifier(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::QualifiedIdentifier);
+
+        node.add_token(
+            self.get_required_token_by_type(
+                Identifier, "missing table identifier")?);
+
+        if self.next_token_is(".") {
+            self.next();
+
+            node.add_token(
+                self.get_required_token_by_type(
+                    Identifier, "missing column identifier")?);
+        }
+
+
+        Ok(node)
     }
 
     fn parse_from(&mut self) -> ParserResult {
