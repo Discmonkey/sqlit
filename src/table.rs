@@ -6,6 +6,8 @@ use rayon::prelude::*;
 use std::path::Path;
 use crate::build_column::build_column;
 use crate::column::Column;
+use crate::result::{SqlResult, SqlError};
+use crate::result::ErrorType::{Type, Lookup};
 
 #[derive(Clone)]
 pub struct Table {
@@ -48,15 +50,19 @@ fn parse_header_line(header_line: String) -> Vec<String> {
     }).collect()
 }
 
-fn create_column_map(table_name: String, column_names: &Vec<String>) -> HashMap<String, usize> {
+fn create_column_map(table_name: String, column_names: &Vec<String>) -> HashMap<(String, String), usize> {
     column_names.iter().enumerate().map(|(index, name)| {
-        ((table_name, name.clone()), index)
+        ((table_name.clone(), name.clone()), index)
     }).collect()
 }
 
-/// from the path to the table, grabs the file name minus the extention 
-fn extract_table_name(file_path: &str) -> String {
-    let re = Regex::new(r"(\d{4})-(\d{2})-(\d{2})\.*^").unwrap();
+/// uses the filename minus the extention
+fn extract_table_name(file_path: &str) -> Option<String> {
+    let p = Path::new(file_path);
+
+    p.file_stem()?.to_str().map(|s| {
+        s.to_string()
+    })
 }
 
 impl Table {
@@ -71,9 +77,13 @@ impl Table {
     }
 
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
-
-
         let f = File::open(file_location)?;
+
+        let table_name = extract_table_name(file_location);
+
+        if table_name.is_none() {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "could not parse table name from file"))
+        }
 
         let mut lines = std::io::BufReader::new(f).lines();
         let maybe_column_line = lines.next();
@@ -82,14 +92,13 @@ impl Table {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"));
         }
 
-        // unwrap the option maybe forward the result
-        let header_line = maybe_column_line.unwrap()?;
-        let column_names = parse_header_line(header_line);
-        let column_map = create_column_map(&column_names);
+        let column_names = parse_header_line(maybe_column_line.unwrap()?);
+        let column_map = create_column_map(table_name.unwrap(), &column_names);
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
         let mut num_rows = 0;
+
         for line in lines {
             num_rows += 1;
             parse_line(line?).into_iter().enumerate().for_each(|(num, s)| {
@@ -107,9 +116,33 @@ impl Table {
         })
     }
 
-    pub fn column(&self, name: &str) -> Option<&Column> {
-        let index = self.column_map.get(name)?.clone();
+    pub fn column(&self, table: &str, name: &str) -> Option<&Column> {
+        let key = (table.to_string(), name.to_string());
+        let index = self.column_map.get(&key)?.clone();
         Some(&self.columns[index])
+    }
+
+    /// column search is a non fully qualified column access IE SELECT a FROM table
+    /// as opposed to SELECT table.a FROM table
+    pub fn column_search(&self, name: &str) -> SqlResult<&Column> {
+        let mut index = 0;
+        let mut found_once = false;
+        for (num, column) in self.column_names.iter().enumerate() {
+            if column.as_str() == name {
+                if found_once {
+                    return Err(SqlError::new("unqualified column name is ambiguous", Lookup))
+                } else {
+                    found_once = true;
+                    index = num 
+                }
+            }
+        }
+
+        if !found_once {
+            return Err(SqlError::new("column not found in table", Lookup))
+        }
+
+        Ok(&self.columns[index])
     }
 
     pub fn len(&self) -> usize {

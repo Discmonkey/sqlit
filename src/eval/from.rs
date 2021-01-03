@@ -7,7 +7,9 @@ use crate::result::ErrorType::{Syntax, Type, Lookup};
 
 
 fn from_statement_to_table(node: ParserNode, ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
-    match tables.get(node.get_tokens().pop_front().unwrap().get_text()) {
+
+    let (_, mut tokens, _) = node.release();
+    match tables.get(tokens.pop_front().unwrap().get_text()) {
         None => Err(SqlError::new("requested table does not exist", Lookup)),
         Some(table) => Ok(table.clone()), 
     }
