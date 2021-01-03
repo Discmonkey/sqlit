@@ -95,7 +95,7 @@ impl Tokenizer {
             |
             (?P<identifier>[a-zA-z][_a-zA-Z1-9]*)
             |
-            (?P<separator>[,()])"#);
+            (?P<separator>[,().])"#);
 
         Self{re: re.unwrap()}
     }
@@ -124,22 +124,51 @@ impl Tokenizer {
 #[cfg(test)]
 mod test {
     use crate::tokenizer::Tokenizer;
+    use crate::tokenizer::TokenType::{Identifier, Separator, Keyword, Literal};
 
     #[test]
     fn tokenize_basic_select() {
         let t = Tokenizer::new();
 
-        let tokens = t.tokenize("SELECT a, b, c FROM table".to_string());
+        let tokens = t.tokenize("SELECT a.c, b, c FROM table".to_string());
 
         match tokens {
+            Err(_e) => assert!(false),
             Ok(mut t) => {
                 let first = t.pop_front().unwrap();
-                assert_eq!(first.text.as_str(), "select");
+                assert!(first.is("select"));
+                assert!(first.is_type(Keyword));
+
+                let second = t.pop_front().unwrap();
+                assert!(second.is("a"));
+                assert!(second.is_type(Identifier));
+
+                let third = t.pop_front().unwrap();
+                assert!(third.is("."));
+                assert!(third.is_type(Separator));
+
+                let fourth = t.pop_front().unwrap();
+                assert!(fourth.is("c"));
+                assert!(fourth.is_type(Identifier));
             },
-            Err(_e) => assert!(false)
         }
+    }
 
+    #[test]
+    fn distinguish() {
+        let t = Tokenizer::new();
 
+        let tokens = t.tokenize("12.34, a.b, 3.54".to_string());
+
+        match tokens {
+            Err(e_) => assert!(false),
+            Ok(mut t) => {
+                [Literal, Separator, Identifier, Separator, Identifier, Separator, Literal]
+                    .into_iter().for_each(|type_| {
+                    assert!(t.pop_front().unwrap().is_type(*type_));
+                });
+            }
+        }
     }
 
 }
