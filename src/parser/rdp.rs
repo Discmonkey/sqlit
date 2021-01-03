@@ -269,7 +269,6 @@ impl RecursiveDescentParser {
                     Identifier, "missing column identifier")?);
         }
 
-
         Ok(node)
     }
 
