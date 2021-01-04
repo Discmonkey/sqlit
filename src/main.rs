@@ -1,19 +1,24 @@
-mod column;
+mod args;
 mod ast;
+mod build_column;
+mod column;
+mod converters;
+mod eval;
+mod ops;
+mod parser;
+mod result;
 mod table;
 mod tokenizer;
-mod result;
-mod ops;
-mod converters;
-mod build_column;
-mod parser;
-mod eval;
 
 use linefeed;
 use std::io;
 use crate::parser::rdp::RecursiveDescentParser;
 
 fn main() -> std::io::Result<()> {
+
+    let args = args::get();
+    println!("{:?}", args);
+
 
     let mut io = linefeed::Interface::new("sqlit")?;
     io.set_prompt("sqlit> ");

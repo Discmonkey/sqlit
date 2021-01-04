@@ -7,6 +7,7 @@ use crate::result::ErrorType::Type;
 mod split;
 mod from;
 mod select;
+mod columns;
 
 pub fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &mut TableContext) -> SqlResult<Table> {
     match root.get_type() {
