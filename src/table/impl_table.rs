@@ -8,53 +8,7 @@ use crate::build_column::build_column;
 use crate::column::Column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Type, Lookup};
-
-#[derive(Clone)]
-pub struct Table {
-    column_names: Vec<String>, // list of columns names
-    column_map: HashMap<(String, String), usize>, // a map of (table, column name) to indices
-    columns: Vec<column::Column>, // the actual data
-    num_rows: usize, // number of rows in the table
-}
-
-pub type TableContext = HashMap<String, Table>;
-
-
-// trim string from white spaces, also replace "|' from first and last characters
-fn clean(raw: &str) -> String {
-    let mut s: String = raw.trim()
-        .chars()
-        .skip_while(|c| {
-            c.eq(&'\"') || c.eq(&'\'')
-        })
-        .collect();
-
-    while s.ends_with(&"\"") || s.ends_with(&"\'") {
-        s.truncate(s.len() - 1)
-    }
-
-    s
-}
-
-fn parse_line(line: String) -> Vec<String> {
-    line.split(",").map(clean).collect()
-}
-
-fn parse_header_line(header_line: String) -> Vec<String> {
-    parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
-        if s.len() == 0 {
-            num.to_string()
-        } else {
-            s
-        }
-    }).collect()
-}
-
-fn create_column_map(table_name: String, column_names: &Vec<String>) -> HashMap<(String, String), usize> {
-    column_names.iter().enumerate().map(|(index, name)| {
-        ((table_name.clone(), name.clone()), index)
-    }).collect()
-}
+use crate::table::Table;
 
 /// uses the filename minus the extention
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -69,6 +23,7 @@ impl Table {
 
     pub fn new() -> Self {
         Table {
+            alias: "".to_string(),
             columns: Vec::new(),
             num_rows: 0,
             column_map: HashMap::new(),
@@ -79,11 +34,13 @@ impl Table {
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
-        let table_name = extract_table_name(file_location);
+        let maybe_alias = extract_table_name(file_location);
 
-        if table_name.is_none() {
+        if maybe_alias.is_none() {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "could not parse table name from file"))
         }
+
+        let alias = maybe_alias.unwrap();
 
         let mut lines = std::io::BufReader::new(f).lines();
         let maybe_column_line = lines.next();
@@ -91,6 +48,8 @@ impl Table {
         if let None = maybe_column_line {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"));
         }
+
+        let alias = table_name.unwrap();
 
         let column_names = parse_header_line(maybe_column_line.unwrap()?);
         let column_map = create_column_map(table_name.unwrap(), &column_names);
@@ -112,6 +71,7 @@ impl Table {
 
 
         Ok(Table {
+            alias: table_name.unwrap(),
             column_map, column_names, columns, num_rows
         })
     }
@@ -156,6 +116,42 @@ impl Table {
 
 }
 
+// trim string from white spaces, also replace "|' from first and last characters
+fn clean(raw: &str) -> String {
+    let mut s: String = raw.trim()
+        .chars()
+        .skip_while(|c| {
+            c.eq(&'\"') || c.eq(&'\'')
+        })
+        .collect();
+
+    while s.ends_with(&"\"") || s.ends_with(&"\'") {
+        s.truncate(s.len() - 1)
+    }
+
+    s
+}
+
+fn parse_line(line: String) -> Vec<String> {
+    line.split(",").map(clean).collect()
+}
+
+fn parse_header_line(header_line: String) -> Vec<String> {
+    parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
+        if s.len() == 0 {
+            num.to_string()
+        } else {
+            s
+        }
+    }).collect()
+}
+
+fn create_column_map(table_name: &String, column_names: &Vec<String>) -> HashMap<(String, String), usize> {
+    column_names.iter().enumerate().map(|(index, name)| {
+        ((table_name.clone(), name.clone()), index)
+    }).collect()
+}
+
 
 #[cfg(test)]
 mod test {
@@ -163,6 +159,7 @@ mod test {
 
     use crate::table;
     use crate::table::clean;
+    use crate::table::impl_table::clean;
 
     #[test]
     fn test_string_clean() {

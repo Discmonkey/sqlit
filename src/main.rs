@@ -17,9 +17,6 @@ use crate::parser::rdp::RecursiveDescentParser;
 fn main() -> std::io::Result<()> {
 
     let args = args::get();
-    println!("{:?}", args);
-
-
     let mut io = linefeed::Interface::new("sqlit")?;
     io.set_prompt("sqlit> ");
 
@@ -32,8 +29,7 @@ fn main() -> std::io::Result<()> {
             io.add_history(input.trim().to_string());
         }
 
-        let tokens = toke.tokenize(input);
-        match tokens {
+        match toke.tokenize(input) {
             Err(e) => println!("{}", e),
             Ok(mut tokens) => {
                 let mut parser = RecursiveDescentParser::new(tokens);

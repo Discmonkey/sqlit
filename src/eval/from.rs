@@ -1,5 +1,5 @@
 use crate::parser::{ParserNode, ParserNodeType};
-use crate::table::{TableContext, Table};
+use crate::table::{Context as TableContext, Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use crate::result::ErrorType::{Syntax, Type, Lookup};
