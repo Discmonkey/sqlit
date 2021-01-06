@@ -1,5 +1,5 @@
 use crate::parser::{ParserNode, ParserNodeType};
-use crate::table::{Context as TableContext, Table};
+use crate::table::{Store as TableContext, Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use crate::result::ErrorType::{Syntax, Type, Lookup};
@@ -9,10 +9,9 @@ use crate::result::ErrorType::{Syntax, Type, Lookup};
 fn from_statement_to_table(node: ParserNode, ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
     let (_, mut tokens, _) = node.release();
 
-    match tables.get(tokens.pop_front().unwrap().get_text()) {
-        None => Err(SqlError::new("requested table does not exist", Lookup)),
-        Some(table) => Ok(table.clone()), 
-    }
+    tables.get(tokens.pop_front().unwrap().get_text()).map(|t| {
+        t.clone()
+    })
 }
 
 pub (super) fn parse_from(root: Option<ParserNode>,

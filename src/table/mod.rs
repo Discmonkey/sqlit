@@ -1,5 +1,5 @@
 mod impl_table;
-mod impl_context;
+mod impl_store;
 
 use crate::column;
 use std::collections::HashMap;
@@ -13,6 +13,6 @@ pub struct Table {
     num_rows: usize, // number of rows in the table
 }
 
-pub struct Context {
+pub struct Store {
     tables: HashMap <String, Table>
 }

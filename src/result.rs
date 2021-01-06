@@ -8,9 +8,10 @@ pub enum Evaluated {
 
 #[derive(Debug)]
 pub enum ErrorType {
+    Lookup,
+    Runtime,
     Syntax,
     Type,
-    Lookup,
 }
 
 pub struct SqlError {

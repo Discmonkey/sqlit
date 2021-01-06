@@ -1,7 +1,7 @@
 use crate::ops::OpContext;
 use crate::parser::ParserNode;
 use crate::result::{SqlResult, SqlError};
-use crate::table::{Context as TableContext, Table};
+use crate::table::{Store as TableContext, Table};
 use crate::result::ErrorType;
 
 

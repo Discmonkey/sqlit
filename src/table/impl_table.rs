@@ -10,11 +10,9 @@ use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Type, Lookup};
 use crate::table::Table;
 
-/// uses the filename minus the extention
+/// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
-    let p = Path::new(file_path);
-
-    p.file_stem()?.to_str().map(|s| {
+    Path::new(file_path).file_stem()?.to_str().map(|s| {
         s.to_string()
     })
 }
@@ -34,30 +32,20 @@ impl Table {
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
-        let maybe_alias = extract_table_name(file_location);
-
-        if maybe_alias.is_none() {
-            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "could not parse table name from file"))
-        }
-
-        let alias = maybe_alias.unwrap();
+        let alias = extract_table_name(file_location)
+            .ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "could not parse table name from file"))?;
 
         let mut lines = std::io::BufReader::new(f).lines();
-        let maybe_column_line = lines.next();
 
-        if let None = maybe_column_line {
-            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"));
-        }
+        let column_line = lines.next().ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"))?;
 
-        let alias = table_name.unwrap();
+        let column_names = parse_header_line(column_line?);
 
-        let column_names = parse_header_line(maybe_column_line.unwrap()?);
-        let column_map = create_column_map(table_name.unwrap(), &column_names);
+        let column_map = create_column_map(&alias, &column_names);
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
         let mut num_rows = 0;
-
         for line in lines {
             num_rows += 1;
             parse_line(line?).into_iter().enumerate().for_each(|(num, s)| {
@@ -69,10 +57,8 @@ impl Table {
             build_column
         ).collect();
 
-
         Ok(Table {
-            alias: table_name.unwrap(),
-            column_map, column_names, columns, num_rows
+            alias, column_map, column_names, columns, num_rows
         })
     }
 
