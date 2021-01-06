@@ -3,7 +3,7 @@
 
 // main entry point
 query:
-    SELECT <columns> (<from>)? (<where>)? (<group by>)? (<order by>)? (<into>)?
+    SELECT <columns> (<from>)? (<where>)? (<group by>)? (<order by>)? (<into>)? (<limit>)?
 
 columns:
     <expression> (, <expression>)*
@@ -60,3 +60,5 @@ into:
 target:
     file'(' string ')' | identifier
 
+limit:
+    LIMIT literal

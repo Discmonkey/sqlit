@@ -26,6 +26,7 @@ pub enum ParserNodeType {
     OrderByStatement,
     Into,
     Target,
+    Limit,
 }
 
 pub struct ParserNode {

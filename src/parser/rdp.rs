@@ -84,7 +84,7 @@ impl RecursiveDescentParser {
         // columns are required
         node.add_child(self.parse_columns()?);
 
-        let optional_clauses = vec!("from", "where", "group by", "order by", "into");
+        let optional_clauses = vec!("from", "where", "group by", "order by", "limit", "into");
         let mut current_index = 0;
 
         while let Some(token) = self.tokens.front() {
@@ -104,6 +104,7 @@ impl RecursiveDescentParser {
                         "group by" => node.add_child(self.parse_group_by()?),
                         "order by" => node.add_child(self.parse_order_by()?),
                         "into" => node.add_child(self.parse_into()?),
+                        "limit" => node.add_child(self.parse_limit()?),
                         _ => ()
                     }
                 }
@@ -368,6 +369,18 @@ impl RecursiveDescentParser {
         if self.next_token_is("ASC") || self.next_token_is("DESC") {
             node.add_token(self.tokens.pop_front().unwrap())
         }
+
+        Ok(node)
+    }
+
+    fn parse_limit(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Limit);
+
+        self.get_required_token_by_value("limit", "mis-configured limit clause")?;
+
+        node.add_token(
+            self.get_required_token_by_type(
+                Literal, "limit clause only supports integral limits")?);
 
         Ok(node)
     }
