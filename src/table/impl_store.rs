@@ -3,6 +3,7 @@ use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::result::ErrorType::{Lookup, Runtime};
 use std::error::Error;
+use std::io;
 
 impl Store {
     pub fn new() -> Self {
@@ -11,17 +12,13 @@ impl Store {
         }
     }
 
-    pub fn from_paths(csv_paths: Vec<String>) -> SqlResult<Self> {
+    pub fn from_paths(csv_paths: Vec<String>) -> io::Result<Self> {
 
         csv_paths.into_iter().map(|path| {
             Table::from_file(path.as_str()).map(|t| {
-                (path, t)
+                (t.alias(), t)
             })
-        }).collect::<std::io::Result<HashMap<String, Table>>>()
-            .map(|tables| Self {tables})
-            .map_err(|e| { SqlError::new(e.to_string().as_str(), Runtime)
-        })
-
+        }).collect::<std::io::Result<HashMap<String, Table>>>().map(|tables| Self {tables})
     }
 
     pub fn get(&self, alias: &str) -> SqlResult<&Table> {

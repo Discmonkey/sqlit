@@ -29,6 +29,10 @@ impl Table {
         }
     }
 
+    pub fn alias(&self) -> String {
+        self.alias.clone()
+    }
+
     pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 

@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::fmt;
 use std::collections::VecDeque;
+use crate::result::SqlResult;
 
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -100,7 +101,7 @@ impl Tokenizer {
         Self{re: re.unwrap()}
     }
 
-    pub fn tokenize(&self, line:  String) -> Result<Tokens, &str> {
+    pub fn tokenize(&self, line:  String) -> Tokens {
 
         let mut v = VecDeque::new();
 
@@ -117,7 +118,7 @@ impl Tokenizer {
             }
         }
 
-        Ok(v)
+        v
     }
 }
 

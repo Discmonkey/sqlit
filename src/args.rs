@@ -2,8 +2,8 @@ use clap::{App, Arg};
 
 #[derive(Debug)]
 pub struct Config {
-    table_paths: Vec<String>,
-    parse_columns: bool,
+    pub table_paths: Vec<String>,
+    pub parse_columns: bool,
 }
 
 pub fn get() -> Config {

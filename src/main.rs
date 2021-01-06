@@ -13,15 +13,24 @@ mod tokenizer;
 use linefeed;
 use std::io;
 use crate::parser::rdp::RecursiveDescentParser;
+use crate::result::SqlResult;
 
 fn main() -> std::io::Result<()> {
 
+    // reading command line args
     let args = args::get();
+
+    // setting up io interface
     let mut io = linefeed::Interface::new("sqlit")?;
     io.set_prompt("sqlit> ");
 
+    // creating our tokenizer
     let toke = tokenizer::Tokenizer::new();
 
+    // loading tables
+    let table_store = table::Store::from_paths(args.table_paths)?;
+
+    // loop
     while let linefeed::ReadResult::Input(input) = io.read_line()? {
         if input.trim().len() == 0 {
             continue;
@@ -29,17 +38,13 @@ fn main() -> std::io::Result<()> {
             io.add_history(input.trim().to_string());
         }
 
-        match toke.tokenize(input) {
-            Err(e) => println!("{}", e),
-            Ok(mut tokens) => {
-                let mut parser = RecursiveDescentParser::new(tokens);
-                let parse_result = parser.parse();
+        let mut tokens = toke.tokenize(input);
+        let mut parser = RecursiveDescentParser::new(tokens);
+        let parse_result = parser.parse();
 
-                match parse_result {
-                    Err(e) => println!("{}", e),
-                    Ok(parsed) => print!("{}", parsed)
-                }
-            }
+        match parse_result {
+            Err(e) => println!("{}", e),
+            Ok(parsed) => print!("{}", parsed)
         }
     }
 
@@ -47,6 +52,7 @@ fn main() -> std::io::Result<()> {
 
     Ok(())
 }
+
 
 #[cfg(test)]
 #[macro_use]

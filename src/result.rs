@@ -1,12 +1,13 @@
 use crate::column::Column;
 use std::fmt;
+use std::error::Error;
 
 pub enum Evaluated {
     Column(Column),
     Value(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorType {
     Lookup,
     Runtime,
@@ -14,6 +15,7 @@ pub enum ErrorType {
     Type,
 }
 
+#[derive(Debug, Clone)]
 pub struct SqlError {
     type_: ErrorType,
     message: String,
@@ -32,6 +34,8 @@ impl fmt::Display for SqlError {
         write!(f, "{:?} Error: {}", self.type_, self.message)
     }
 }
+
+impl Error for SqlError{}
 
 pub type SqlResult<T> = std::result::Result<T, SqlError>;
 
