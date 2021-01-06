@@ -1,10 +1,8 @@
-use crate::parser::{ParserNode, ParserNodeType};
+use crate::parser::ParserNode;
 use crate::table::{Store as TableContext, Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
-use crate::result::ErrorType::{Syntax, Type, Lookup};
-
-
+use crate::result::ErrorType::{Syntax};
 
 fn from_statement_to_table(node: ParserNode, ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
     let (_, mut tokens, _) = node.release();

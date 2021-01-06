@@ -1,4 +1,4 @@
-use crate::tokenizer::{Token, TokenType};
+use crate::tokenizer::{Token};
 use std::collections::VecDeque;
 
 pub mod rdp;

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use crate::column;
 use std::fs::File;
 use std::io::{BufRead};
 use rayon::prelude::*;
@@ -7,7 +6,7 @@ use std::path::Path;
 use crate::build_column::build_column;
 use crate::column::Column;
 use crate::result::{SqlResult, SqlError};
-use crate::result::ErrorType::{Type, Lookup};
+use crate::result::ErrorType::{Lookup};
 use crate::table::Table;
 
 /// uses the filename minus the extension
