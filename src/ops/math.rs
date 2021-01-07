@@ -1,4 +1,4 @@
-use crate::column::Column;
+use crate::table::Column;
 
 pub enum Op {
     Add,

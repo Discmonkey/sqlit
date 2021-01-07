@@ -1,7 +1,6 @@
 mod args;
 mod ast;
 mod build_column;
-mod column;
 mod converters;
 mod eval;
 mod ops;

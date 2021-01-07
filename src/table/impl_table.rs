@@ -4,10 +4,9 @@ use std::io::{BufRead};
 use rayon::prelude::*;
 use std::path::Path;
 use crate::build_column::build_column;
-use crate::column::Column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Lookup};
-use crate::table::Table;
+use crate::table::{Table, Column};
 
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -102,6 +101,11 @@ impl Table {
         self.column_names.len()
     }
 
+    pub fn limit(&mut self, length: usize) {
+        for i in 0..self.columns.len() {
+            self.columns[i].limit(length);
+        }
+    }
 
 }
 

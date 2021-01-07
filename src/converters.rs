@@ -1,6 +1,5 @@
-use crate::column;
-use crate::column::{Column};
 use chrono::{DateTime, NaiveDate};
+use crate::table::{Column, DateTime as Timestamp};
 
 fn result_to_option<T, E>(result: Result<T, E>) -> Option<T> {
     match result {
@@ -11,7 +10,7 @@ fn result_to_option<T, E>(result: Result<T, E>) -> Option<T> {
 
 pub trait Converter<T> {
     fn convert(&mut self, field: &str) -> Option<T>;
-    fn make_column(&self, values: Vec<T>) ->  column::Column;
+    fn make_column(&self, values: Vec<T>) ->  Column;
 }
 
 pub struct ToString {}
@@ -22,7 +21,7 @@ impl Converter<String> for ToString {
     }
 
     fn make_column(&self, values: Vec<String>) -> Column {
-        column::Column::Strings(values)
+        Column::Strings(values)
     }
 }
 
@@ -38,7 +37,7 @@ macro_rules! make_default_converter {
             }
 
             fn make_column(&self, values: Vec<$type>) -> Column {
-                column::Column::$enum(values)
+                Column::$enum(values)
             }
         }
     }
@@ -62,8 +61,8 @@ impl ToDate {
     }
 }
 
-impl Converter<column::DateTime> for ToDate {
-    fn convert(&mut self, field: &str) -> Option<column::DateTime> {
+impl Converter<Timestamp> for ToDate {
+    fn convert(&mut self, field: &str) -> Option<Timestamp> {
         if self.valid_format_found {
             result_to_option(NaiveDate::parse_from_str(field, self.valid_format
                 .as_str()).map(|v| {v.and_hms(0, 0, 0).timestamp()}))
@@ -98,7 +97,7 @@ impl Converter<column::DateTime> for ToDate {
     }
 
     fn make_column(&self, values: Vec<i64>) -> Column {
-        column::Column::Dates(values)
+        Column::Dates(values)
     }
 }
 

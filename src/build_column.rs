@@ -1,9 +1,8 @@
 use crate::converters::{Converter, ToBool, ToDate, ToFloat, ToInt};
-use crate::column;
-use crate::column::Column;
+use crate::table::Column;
 
 /// Converts raw values Vec<String> into a column
-pub fn build_column(raw_values: Vec<String>) -> column::Column {
+pub fn build_column(raw_values: Vec<String>) -> Column {
     if let Some(converted_column) = convert_into_column(&raw_values, Box::new(ToBool{})) {
         converted_column
     } else if let Some(converted_column) = convert_into_column(&raw_values, Box::new(ToDate::new())) {
@@ -13,7 +12,7 @@ pub fn build_column(raw_values: Vec<String>) -> column::Column {
     } else if let Some(converted_column) = convert_into_column(&raw_values, Box::new(ToFloat{})) {
         converted_column
     } else {
-        column::Column::Strings(raw_values)
+        Column::Strings(raw_values)
     }
 }
 
@@ -33,7 +32,7 @@ fn convert_into_column<T>(raw_values: &Vec<String>, mut converter: Box<dyn Conve
 #[cfg(test)]
 mod test {
     use crate::build_column::build_column;
-    use crate::column;
+    use crate::table::Column;
     #[test]
     fn build_booleans() {
         let raw_booleans = vec!("true", "false", "false").iter().map(|v| v.to_string()).collect();
@@ -41,7 +40,7 @@ mod test {
         let column = build_column(raw_booleans);
 
         match column {
-            column::Column::Booleans(v) => {
+            Column::Booleans(v) => {
                 assert!(v[0]);
                 assert!(!v[1]);
                 assert!(!v[2]);
@@ -60,7 +59,7 @@ mod test {
         let column = build_column(raw_booleans);
 
         match column {
-            column::Column::Strings(_) => {
+            Column::Strings(_) => {
                 assert!(true)
             }
 
