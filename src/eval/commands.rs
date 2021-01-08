@@ -60,6 +60,7 @@ impl std::fmt::Display for PrintableTables {
         for (num, (table_name, columns)) in self.tables.iter().enumerate() {
             if num > 0 {
                 writeln!(f)?;
+                writeln!(f)?;
             }
 
             write!(f, "{}: {}", table_name, columns);

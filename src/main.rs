@@ -27,8 +27,10 @@ fn main() -> std::io::Result<()> {
     let toke = tokenizer::Tokenizer::new();
 
     // loading tables
-    let table_store = table::Store::from_paths(args.table_paths)?;
-    let tables = table_store.tables();
+    let mut table_store = table::Store::from_paths(args.table_paths)?;
+
+    // get ops
+    let mut ops = ops::OpContext::new();
 
     // loop
     while let linefeed::ReadResult::Input(input) = io.read_line()? {
@@ -44,7 +46,12 @@ fn main() -> std::io::Result<()> {
 
         match parse_result {
             Err(e) => println!("{}", e),
-            Ok(parsed) => print!("{}", parsed)
+            Ok(parsed) => {
+                match eval::eval(parsed, &mut ops, &mut table_store) {
+                    Err(e) => println!("{}", e),
+                    Ok(evaluated) => println!("{}", evaluated)
+                }
+            }
         }
     }
 

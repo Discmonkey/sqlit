@@ -11,7 +11,7 @@ use crate::table::{Table, Column};
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
     Path::new(file_path).file_stem()?.to_str().map(|s| {
-        s.to_string()
+        s.to_string().replace(".", "_")
     })
 }
 
@@ -109,9 +109,6 @@ impl Table {
     pub fn width(&self) -> usize {
         self.column_names.len()
     }
-
-
-
 }
 
 // trim string from white spaces, also replace "|' from first and last characters
