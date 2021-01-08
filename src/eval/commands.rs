@@ -15,7 +15,7 @@ pub (super) struct PrintableTableNames {
 }
 
 impl PrintableColumns {
-    fn from(table: &Table) -> Self {
+    pub fn from(table: &Table) -> Self {
         Self {
             names: table.column_names()
         }
@@ -23,17 +23,18 @@ impl PrintableColumns {
 }
 
 impl PrintableTables {
-    fn from(store: &Store) -> Self {
+    pub fn from(store: &Store) -> Self {
         Self {
             tables: store.tables().into_iter().map(|table_name| {
-                (table_name, PrintableColumns::from(store.get(table_name.as_str()).unwrap()))
+                let table = store.get(table_name.as_str()).unwrap();
+                (table_name, PrintableColumns::from(table))
             }).collect()
         }
     }
 }
 
 impl PrintableTableNames {
-    fn from(store: &Store) -> Self {
+    pub fn from(store: &Store) -> Self {
         Self {
             tables: store.tables()
         }
@@ -47,7 +48,7 @@ impl std::fmt::Display for PrintableColumns {
                 write!(f, " ")?;
             }
 
-            write!(f, "{}", col)
+            write!(f, "{}", col)?;
         }
 
         Ok(())
@@ -76,7 +77,7 @@ impl std::fmt::Display for PrintableTableNames {
                 write!(f, " ")?;
             }
 
-            write!(f, "{}", col)
+            write!(f, "{}", col)?;
         }
 
         Ok(())

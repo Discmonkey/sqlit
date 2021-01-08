@@ -23,7 +23,14 @@ impl RecursiveDescentParser {
     }
 
     pub fn parse(&mut self) -> ParserResult {
-        self.parse_query()
+
+        if self.next_token_is("columns") {
+            self.parse_column_command()
+        } else if self.next_token_is("tables") {
+            self.parse_tables_command()
+        } else {
+            self.parse_query()
+        }
     }
 
     fn next_token_is(&self, value: &str) -> bool {
