@@ -28,6 +28,7 @@ fn main() -> std::io::Result<()> {
 
     // loading tables
     let table_store = table::Store::from_paths(args.table_paths)?;
+    let tables = table_store.tables();
 
     // loop
     while let linefeed::ReadResult::Input(input) = io.read_line()? {

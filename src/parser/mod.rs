@@ -7,6 +7,8 @@ pub mod display;
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParserNodeType {
     Query,
+    ColumnsCommand,
+    TablesCommand,
     Columns,
     Expression,
     Equality,

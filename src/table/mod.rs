@@ -1,6 +1,6 @@
 mod impl_table;
 mod impl_store;
-mod impl_table_fmt;
+mod impl_table_display;
 mod impl_column;
 
 use std::collections::HashMap;

@@ -1,8 +1,7 @@
 use crate::table::{Store, Table};
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
-use crate::result::ErrorType::{Lookup, Runtime};
-use std::error::Error;
+use crate::result::ErrorType::{Lookup};
 use std::io;
 
 impl Store {
@@ -24,5 +23,9 @@ impl Store {
     pub fn get(&self, alias: &str) -> SqlResult<&Table> {
         self.tables.get(alias).ok_or(
             SqlError::new(format!("alias {} not found in store", alias).as_str(), Lookup))
+    }
+
+    pub fn tables(&self) -> Vec<String> {
+        self.tables.keys().map(|s| s.clone()).collect()
     }
 }

@@ -88,7 +88,7 @@ impl Tokenizer {
 
         let re = Regex::new(r#"(?xi)
             [\s]* #skip white spaces
-            (?P<keyword>SELECT|FROM|WHERE|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY|INTO|LIMIT|ASC|DESC)
+            (?P<keyword>SELECT|FROM|WHERE|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY|INTO|LIMIT|ASC|DESC|COLUMNS|TABLES)
             |
             (?P<operator>>=|<=|[-+/*><]|or\s|and\s)
             |
