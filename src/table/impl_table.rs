@@ -70,6 +70,10 @@ impl Table {
         Some(&self.columns[index])
     }
 
+    pub fn column_names(&self) -> Vec<String> {
+        self.column_names.clone()
+    }
+
     /// column search is a non fully qualified column access IE SELECT a FROM table
     /// as opposed to SELECT table.a FROM table
     pub fn column_search(&self, name: &str) -> SqlResult<&Column> {
@@ -97,15 +101,16 @@ impl Table {
         self.num_rows
     }
 
-    pub fn width(&self) -> usize {
-        self.column_names.len()
-    }
-
     pub fn limit(&mut self, length: usize) {
         for i in 0..self.columns.len() {
             self.columns[i].limit(length);
         }
     }
+    pub fn width(&self) -> usize {
+        self.column_names.len()
+    }
+
+
 
 }
 
