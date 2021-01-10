@@ -47,6 +47,16 @@ impl RecursiveDescentParser {
         }
     }
 
+    /// next_next_token_is is needed to distinguish between functions and regular identifiers, ie
+    /// test(...args) versus test * test
+    /// an ll(1) parser fails on such an example, so, alas, we need this method
+    fn next_next_token_is(&self, value: &str) -> bool {
+        match self.tokens.get(1) {
+            Some(t) => t.is(value),
+            None => false,
+        }
+    }
+
     fn get_required_token_by_type(&mut self,
                                   token_type: TokenType,
                                   err_message: &str) -> Result<Token, SqlError> {
@@ -233,9 +243,13 @@ impl RecursiveDescentParser {
         let mut node = ParserNode::new(ParserNodeType::Primary);
 
         if self.next_token_type_is(Literal) {
-            node.add_token(self.next());
+            node.add_child(self.parse_literal()?);
         } else if self.next_token_type_is(Identifier)  {
-            node.add_child(self.parse_primary_identifier()?)
+            if self.next_next_token_is("(") {
+                node.add_child(self.parse_function()?);
+            } else {
+                node.add_child(self.parse_identifier()?)
+            }
         } else if self.next_token_is("(") {
             self.tokens.pop_front();
 
@@ -253,26 +267,16 @@ impl RecursiveDescentParser {
         Ok(node)
     }
 
-    fn parse_primary_identifier(&mut self) -> ParserResult {
-        let mut node = ParserNode::new(ParserNodeType::PrimaryIdentifier);
+    fn parse_literal(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Literal);
 
-        node.add_child(self.parse_qualified_identifier()?);
-
-        if self.next_token_is( "("){
-            node.set_type(Function);
-
-            self.next();
-
-            node.add_child(self.parse_expression()?);
-
-            self.get_required_token_by_value(")", PAREN_ERROR)?;
-        }
+        node.add_token(self.get_required_token_by_type(Literal, "literal required")?);
 
         Ok(node)
     }
 
-    fn parse_qualified_identifier(&mut self) -> ParserResult {
-        let mut node = ParserNode::new(ParserNodeType::QualifiedIdentifier);
+    fn parse_identifier(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Identifier);
 
         node.add_token(
             self.get_required_token_by_type(
@@ -285,6 +289,20 @@ impl RecursiveDescentParser {
                 self.get_required_token_by_type(
                     Identifier, "missing column identifier")?);
         }
+
+        Ok(node)
+    }
+
+    fn parse_function(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::Function);
+
+        node.add_token(self.get_required_token_by_type(Identifier, "identifier required for function")?);
+
+        self.get_required_token_by_value("(", "missing opening paren");
+
+        node.add_child(self.parse_columns()?);
+
+        self.get_required_token_by_value(")", PAREN_ERROR);
 
         Ok(node)
     }

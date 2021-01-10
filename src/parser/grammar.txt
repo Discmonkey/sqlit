@@ -17,9 +17,6 @@ equality:
 comparison:
     <term> ( ">" | ">=" | "<" | "<=" <term> )*
 
-qualified_identifier:
-    identifier ("." identifier)?
-
 term:
     <factor> ("-" | "+" factor )*
 
@@ -31,10 +28,13 @@ unary:
 
 // technically a <query> in a primary expression can only represent a single value such as, SELECT max(a) FROM table, however this restriction is difficult to express in the grammar:
 primary:
-    literal | <primary_value> | "(" expression | query ")"
+    <literal> | <identifier> | <function> | "(" expression | query ")"
 
-primary_identifier:
-    qualified_identifier ("(" expression | query ")")?
+identifier:
+    identifier ("." identifier)?
+
+function:
+    identifier '(' columns ')'
 
 from:
     FROM <from_statement> (LEFT JOIN | INNER JOIN <from_statement> on <expression>
