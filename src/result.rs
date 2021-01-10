@@ -2,10 +2,6 @@ use crate::table::Column;
 use std::fmt;
 use std::error::Error;
 
-pub enum Evaluated {
-    Column(Column),
-    Value(String),
-}
 
 #[derive(Debug, Clone)]
 pub enum ErrorType {

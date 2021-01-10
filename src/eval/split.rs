@@ -4,6 +4,7 @@ use crate::result::ErrorType::Syntax;
 
 pub (super) struct SplitAst {
     pub columns: Option<ParserNode>,
+    pub limit: Option<ParserNode>,
     pub from: Option<ParserNode>,
     pub group_by: Option<ParserNode>,
     pub where_: Option<ParserNode>,
@@ -24,6 +25,7 @@ pub (super) fn split(root: ParserNode) -> SqlResult<SplitAst> {
         where_: None,
         order_by: None,
         into: None,
+        limit: None,
     };
 
     children.into_iter().for_each(|node| {
@@ -34,6 +36,7 @@ pub (super) fn split(root: ParserNode) -> SqlResult<SplitAst> {
             ParserNodeType::Where => divided_ast.where_ = Some(node),
             ParserNodeType::OrderBy => divided_ast.order_by = Some(node),
             ParserNodeType::Into => divided_ast.into = Some(node),
+            ParserNodeType::Limit => divided_ast.limit = Some(node),
             _ => (),
         };
     });

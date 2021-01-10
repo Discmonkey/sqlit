@@ -12,7 +12,7 @@ fn from_statement_to_table(node: ParserNode, ops: &mut OpContext, tables: &mut T
     })
 }
 
-pub (super) fn parse_from(root: Option<ParserNode>,
+pub (super) fn eval(root: Option<ParserNode>,
                           op_context: &mut OpContext,
                           table_context: &mut TableContext) -> SqlResult<Table> {
 

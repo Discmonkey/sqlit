@@ -152,13 +152,7 @@ impl RecursiveDescentParser {
 
     // expression is used for readability but does not actually produce a node, making the walk a bit easier
     fn parse_expression(&mut self) -> ParserResult {
-        let mut tree = self.parse_equality()?;
-
-        while tree.children.len() == 1 && tree.tokens.len() == 0 {
-            tree = tree.children.pop_back().unwrap();
-        }
-
-        Ok(tree)
+        self.parse_equality()
     }
 
     fn parse_equality(&mut self) -> ParserResult {
