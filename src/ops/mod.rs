@@ -7,12 +7,10 @@ pub mod math;
 
 pub trait ApplyOp {
     fn apply(self, arguments: Vec<Column>) -> SqlResult<Column>;
-    fn name() -> &str;
 }
 
 pub trait ReduceOp {
     fn reduce(self, ) -> SqlResult<Column>;
-    fn name() -> &str;
 }
 
 pub struct OpContext {
@@ -40,12 +38,12 @@ impl OpContext {
         }).ok_or(SqlError::new("no such reducer", Lookup))?
     }
 
-    pub fn set_apply(&mut self, op: Box<dyn ApplyOp>) {
-        self.applies.insert(op.name().to_string(), op);
+    pub fn set_apply(&mut self, function: &str, op: Box<dyn ApplyOp>) {
+        self.applies.insert(function.to_string(), op);
     }
 
-    pub fn set_reduce(&mut self, op: Box<dyn ReduceOp>) {
-        self.reducers.insert(op.name().to_string(), op);
+    pub fn set_reduce(&mut self, function: &str, op: Box<dyn ReduceOp>) {
+        self.reducers.insert(function.to_string(), op);
     }
 
 }
