@@ -6,11 +6,11 @@ use crate::result::ErrorType::Lookup;
 pub mod math;
 
 pub trait ApplyOp {
-    fn apply(self, arguments: Vec<Column>) -> SqlResult<Column>;
+    fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
 }
 
 pub trait ReduceOp {
-    fn reduce(self, ) -> SqlResult<Column>;
+    fn reduce(&self, argument: Column) -> SqlResult<Column>;
 }
 
 pub struct OpContext {
@@ -32,7 +32,7 @@ impl OpContext {
         }).ok_or(SqlError::new("no such op", Lookup))?
     }
 
-    pub fn reduce(&self, function: &str, argument: Vec<Column>) -> SqlResult<Column> {
+    pub fn reduce(&self, function: &str, argument: Column) -> SqlResult<Column> {
         self.reducers.get(function).map(|r| {
             r.reduce(argument)
         }).ok_or(SqlError::new("no such reducer", Lookup))?

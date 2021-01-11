@@ -17,9 +17,9 @@ pub (super) fn eval(mut node: Option<ParserNode>, op_context: &mut OpContext, ta
 
     let (_, _, children) = columns_root.release();
 
-    let columns: SqlResult<Vec<Column>> = children.into_iter().map(|node| {
+    let columns  = children.into_iter().map(|node| {
         eval_expression(node, op_context, table)
-    }).collect()?;
+    }).collect::<SqlResult<Vec<Column>>>()?;
 
 
 
@@ -85,8 +85,10 @@ fn eval_unary(node: ParserNode, op_context: &mut OpContext, table: &Table) -> Sq
     let next_node = nodes.pop_front().ok_or(SqlError::new("expected value", Syntax))?;
 
     match tokens.pop_front() {
-        Some(t) => op_context.apply(t.get_text().as_str(),
-                vec![eval_unary(next_node, op_context, table)?]),
+        Some(t) => {
+            let evaluated = eval_unary(next_node, op_context, table)?;
+            op_context.apply(t.get_text().as_str(), vec![evaluated])
+        },
 
         None => eval_primary(next_node, op_context, table)
     }

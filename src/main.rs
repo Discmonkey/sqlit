@@ -1,5 +1,4 @@
 mod args;
-mod ast;
 mod build_column;
 mod converters;
 mod eval;
@@ -42,9 +41,8 @@ fn main() -> std::io::Result<()> {
 
         let mut tokens = toke.tokenize(input);
         let mut parser = RecursiveDescentParser::new(tokens);
-        let parse_result = parser.parse();
 
-        match parse_result {
+        match parser.parse() {
             Err(e) => println!("{}", e),
             Ok(parsed) => {
                 match eval::eval(parsed, &mut ops, &mut table_store) {
