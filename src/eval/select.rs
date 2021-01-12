@@ -13,7 +13,9 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
 
     let from_table = from::eval(parts.from, op_context, table_context)?;
 
-    let selected_table = columns::eval(parts.columns, op_context, &from_table)?;
+    let mut selected_table = columns::eval(parts.columns, op_context, &from_table)?;
+
+    selected_table.limit(10);
 
     Ok(selected_table)
 }

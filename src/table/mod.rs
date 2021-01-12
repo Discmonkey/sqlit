@@ -16,6 +16,12 @@ pub enum Column {
     Dates(Vec<DateTime>), // lets just unix timestamps, for now
 }
 
+#[derive(Clone, Debug)]
+pub struct NamedColumn {
+    pub name: String,
+    pub column: Column
+}
+
 #[derive(Clone)]
 pub struct Table {
     alias: String,

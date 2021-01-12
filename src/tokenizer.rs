@@ -131,45 +131,38 @@ mod test {
     fn tokenize_basic_select() {
         let t = Tokenizer::new();
 
-        let tokens = t.tokenize("SELECT a.c, b, c FROM table".to_string());
+        let mut tokens = t.tokenize("SELECT a.c, b, c FROM table".to_string());
 
-        match tokens {
-            Err(_e) => assert!(false),
-            Ok(mut t) => {
-                let first = t.pop_front().unwrap();
-                assert!(first.is("select"));
-                assert!(first.is_type(Keyword));
 
-                let second = t.pop_front().unwrap();
-                assert!(second.is("a"));
-                assert!(second.is_type(Identifier));
+        let first = tokens.pop_front().unwrap();
+        assert!(first.is("select"));
+        assert!(first.is_type(Keyword));
 
-                let third = t.pop_front().unwrap();
-                assert!(third.is("."));
-                assert!(third.is_type(Separator));
+        let second = tokens.pop_front().unwrap();
+        assert!(second.is("a"));
+        assert!(second.is_type(Identifier));
 
-                let fourth = t.pop_front().unwrap();
-                assert!(fourth.is("c"));
-                assert!(fourth.is_type(Identifier));
-            },
-        }
+        let third = tokens.pop_front().unwrap();
+        assert!(third.is("."));
+        assert!(third.is_type(Separator));
+
+        let fourth = tokens.pop_front().unwrap();
+        assert!(fourth.is("c"));
+        assert!(fourth.is_type(Identifier));
+
     }
 
     #[test]
     fn distinguish() {
         let t = Tokenizer::new();
 
-        let tokens = t.tokenize("12.34, a.b, 3.54".to_string());
+        let mut tokens = t.tokenize("12.34, a.b, 3.54".to_string());
 
-        match tokens {
-            Err(e_) => assert!(false),
-            Ok(mut t) => {
-                [Literal, Separator, Identifier, Separator, Identifier, Separator, Literal]
-                    .into_iter().for_each(|type_| {
-                    assert!(t.pop_front().unwrap().is_type(*type_));
-                });
-            }
-        }
+
+        [Literal, Separator, Identifier, Separator, Identifier, Separator, Literal]
+            .into_iter().for_each(|type_| {
+            assert!(tokens.pop_front().unwrap().is_type(*type_));
+        });
     }
 
 }

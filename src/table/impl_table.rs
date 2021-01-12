@@ -6,7 +6,8 @@ use std::path::Path;
 use crate::build_column::build_column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Lookup};
-use crate::table::{Table, Column};
+use crate::table::{Table, Column, NamedColumn};
+use std::cmp::max;
 
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -65,7 +66,7 @@ impl Table {
     }
 
     pub fn column(&self, table: &str, name: &str) -> Option<&Column> {
-        let key = (table.to_string(), name.to_string());
+        let key = (table.to_string().to_lowercase(), name.to_string());
         let index = self.column_map.get(&key)?.clone();
         Some(&self.columns[index])
     }
@@ -106,9 +107,26 @@ impl Table {
             self.columns[i].limit(length);
         }
     }
+
+    pub fn push(&mut self, column: NamedColumn, table: Option<&str>) {
+        let table_name = table.unwrap_or("");
+        let name = column.name;
+        let column = column.column;
+        let length = column.len();
+
+        self.column_names.push(name.clone());
+        self.columns.push(column);
+        self.column_map.insert(
+            (table_name.to_string(), name),
+            self.columns.len() - 1
+        );
+        self.num_rows = max(self.num_rows, length);
+    }
+
     pub fn width(&self) -> usize {
         self.column_names.len()
     }
+
 }
 
 // trim string from white spaces, also replace "|' from first and last characters
@@ -136,7 +154,7 @@ fn parse_header_line(header_line: String) -> Vec<String> {
         if s.len() == 0 {
             num.to_string()
         } else {
-            s
+            s.to_lowercase()
         }
     }).collect()
 }
@@ -153,7 +171,6 @@ mod test {
 
 
     use crate::table;
-    use crate::table::clean;
     use crate::table::impl_table::clean;
 
     #[test]

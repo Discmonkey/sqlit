@@ -162,7 +162,11 @@ impl RecursiveDescentParser {
 
     // expression is used for readability but does not actually produce a node, making the walk a bit easier
     fn parse_expression(&mut self) -> ParserResult {
-        self.parse_equality()
+        let mut node = ParserNode::new(ParserNodeType::Expression);
+
+        node.add_child(self.parse_equality()?);
+
+        Ok(node)
     }
 
     fn parse_equality(&mut self) -> ParserResult {
@@ -448,7 +452,7 @@ mod test {
     #[test]
     fn tokenize_basic_select() {
         let t = Tokenizer::new();
-        let mut tokens = t.tokenize("SELECT a, b, c FROM table".to_string()).unwrap();
+        let mut tokens = t.tokenize("SELECT a, b, c FROM table".to_string());
         let maybe_tree = RecursiveDescentParser::new(tokens).parse();
 
         match maybe_tree {

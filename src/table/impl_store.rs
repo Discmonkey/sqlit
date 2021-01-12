@@ -28,4 +28,24 @@ impl Store {
     pub fn tables(&self) -> Vec<String> {
         self.tables.keys().map(|s| s.clone()).collect()
     }
+
+}
+
+#[cfg(test)]
+mod test {
+    use crate::table::Store;
+    use crate::result::SqlResult;
+
+    #[test]
+    fn test_get() -> std::io::Result<()>{
+        let mut s = Store::from_paths(vec!["test/nba.games.stats.csv".to_string()])?;
+
+
+        match s.get(&"nba_games_stats") {
+            Ok(t) => assert!(true),
+            Err(e) => assert!(false),
+        };
+
+        Ok(())
+    }
 }
