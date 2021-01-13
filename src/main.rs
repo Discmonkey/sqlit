@@ -20,6 +20,7 @@ fn main() -> std::io::Result<()> {
 
     // setting up io interface
     let mut io = linefeed::Interface::new("sqlit")?;
+
     io.set_prompt("sqlit> ");
 
     // creating our tokenizer
@@ -27,6 +28,8 @@ fn main() -> std::io::Result<()> {
 
     // loading tables
     let mut table_store = table::Store::from_paths(args.table_paths)?;
+
+
 
     // get ops
     let mut ops = ops::OpContext::new();

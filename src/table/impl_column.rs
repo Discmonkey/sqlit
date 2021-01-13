@@ -1,4 +1,4 @@
-use crate::table::Column;
+use crate::table::{Column, ColumnType};
 
 
 macro_rules! apply {
@@ -20,5 +20,15 @@ impl Column {
 
     pub fn len(&self) -> usize {
         apply!(self, len,)
+    }
+
+    pub fn type_(&self) -> ColumnType {
+        match self {
+            Column::Booleans(_) => ColumnType::Boolean,
+            Column::Ints(_) => ColumnType::Int,
+            Column::Floats(_) => ColumnType::Float,
+            Column::Dates(_) => ColumnType::Date,
+            Column::Strings(_) => ColumnType::String
+        }
     }
 }
