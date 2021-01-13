@@ -1,11 +1,14 @@
+#[macro_use]
+mod binary_ops;
+
+mod math;
+
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::Lookup;
 
-pub mod math;
-
-pub trait ApplyOp {
+pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
 }
 
@@ -14,7 +17,7 @@ pub trait ReduceOp {
 }
 
 pub struct OpContext {
-    applies: HashMap<String, Box<dyn ApplyOp>>,
+    applies: HashMap<String, Box<dyn MapOp>>,
     reducers: HashMap<String, Box<dyn ReduceOp>>,
 }
 
@@ -38,7 +41,7 @@ impl OpContext {
         }).ok_or(SqlError::new("no such reducer", Lookup))?
     }
 
-    pub fn set_apply(&mut self, function: &str, op: Box<dyn ApplyOp>) {
+    pub fn set_apply(&mut self, function: &str, op: Box<dyn MapOp>) {
         self.applies.insert(function.to_string(), op);
     }
 
