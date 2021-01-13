@@ -127,6 +127,10 @@ impl Table {
         self.column_names.len()
     }
 
+    pub fn into_columns(self) -> Vec<Column> {
+        self.columns
+    }
+
 }
 
 // trim string from white spaces, also replace "|' from first and last characters
@@ -154,7 +158,7 @@ fn parse_header_line(header_line: String) -> Vec<String> {
         if s.len() == 0 {
             num.to_string()
         } else {
-            s.to_lowercase()
+            s.to_lowercase().replace(".", "_")
         }
     }).collect()
 }

@@ -1,8 +1,8 @@
-use crate::table::{Table, Store as TableContext};
+use crate::table::{Store as TableContext};
 use crate::parser::{ParserNode, ParserNodeType};
 use crate::ops::OpContext;
 use crate::result::{SqlResult, SqlError};
-use crate::result::ErrorType::{Type, Runtime};
+use crate::result::ErrorType::{Runtime};
 use crate::eval::commands::{PrintableTableNames, PrintableTables};
 
 mod split;

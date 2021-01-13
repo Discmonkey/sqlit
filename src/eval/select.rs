@@ -3,7 +3,6 @@ use crate::table::{Table, Store as TableContext};
 use crate::parser::ParserNode;
 use crate::ops::OpContext;
 use crate::result::{SqlResult, SqlError};
-use crate::result::ErrorType::Lookup;
 use crate::eval::from;
 use super::columns;
 
