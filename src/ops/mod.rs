@@ -7,6 +7,7 @@ use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::Lookup;
+use crate::ops::math::{Add, Multiply, Subtract, Divide};
 
 pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
@@ -23,10 +24,17 @@ pub struct OpContext {
 
 impl OpContext {
     pub fn new() -> Self {
-        OpContext{
+        let mut context = OpContext{
             applies: HashMap::new(),
             reducers: HashMap::new(),
-        }
+        };
+
+        context.set_apply("+", Box::new(Add{}));
+        context.set_apply("*", Box::new(Multiply{}));
+        context.set_apply("-", Box::new(Subtract{}));
+        context.set_apply("/", Box::new(Divide{}));
+
+        context
     }
 
     pub fn apply(&self, function: &str, arguments: Vec<Column>) -> SqlResult<Column> {
