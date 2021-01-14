@@ -6,7 +6,7 @@ use std::path::Path;
 use crate::build_column::build_column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Lookup};
-use crate::table::{Table, Column, NamedColumn};
+use crate::table::{Table, Column, NamedColumn, TableMeta};
 use std::cmp::max;
 
 /// uses the filename minus the extension
@@ -105,6 +105,17 @@ impl Table {
     pub fn limit(&mut self, length: usize) {
         for i in 0..self.columns.len() {
             self.columns[i].limit(length);
+        }
+    }
+
+    pub fn meta(&self) -> TableMeta {
+        TableMeta {
+            columns: self.columns.iter().zip( self.column_names.iter()).map(
+                |(column, name)| {
+                    (name.clone(), column.type_())
+                }).collect(),
+            length: self.len(),
+            alias: self.alias.clone()
         }
     }
 

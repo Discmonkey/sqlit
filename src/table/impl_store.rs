@@ -29,6 +29,9 @@ impl Store {
         self.tables.keys().map(|s| s.clone()).collect()
     }
 
+    pub fn list(&self) -> Vec<&Table> {
+        self.tables.values().collect()
+    }
 }
 
 #[cfg(test)]

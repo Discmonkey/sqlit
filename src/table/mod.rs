@@ -43,7 +43,9 @@ pub struct Table {
 
 #[derive(Clone)]
 pub struct TableMeta {
-    columns: Vec<(String, >
+    pub columns: Vec<(String, ColumnType)>,
+    pub length: usize,
+    pub alias: String,
 }
 
 pub struct Store {

@@ -1,0 +1,47 @@
+use crate::table::TableMeta;
+use linefeed::{Completer, Prompter, Completion, Suffix, Terminal};
+
+pub struct TableCompleter {
+    tables: Vec<TableMeta>
+}
+
+impl<Term: Terminal> Completer<Term> for TableCompleter {
+    fn complete(&self, _word: &str, _reader: &Prompter<Term>,
+                _start: usize, _end: usize) -> Option<Vec<Completion>> {
+        let mut completions = Vec::new();
+
+        self.tables.iter().for_each(|metadata| {
+            if metadata.alias.starts_with(_word) {
+                completions.push(Completion {
+                    completion: metadata.alias.clone(),
+                    display: None,
+                    suffix: Suffix::Default
+                })
+            }
+
+            metadata.columns.iter().for_each(|(c, _)| {
+                if c.starts_with(_word) {
+                    completions.push(Completion {
+                        completion: c.clone(),
+                        display: None,
+                        suffix: Suffix::Default,
+                    })
+                }
+            })
+        });
+
+        if completions.len() > 0 {
+            Some(completions)
+        } else {
+            None
+        }
+    }
+}
+
+impl TableCompleter {
+    pub fn new(tables: Vec<TableMeta>) -> Self {
+        Self {
+            tables
+        }
+    }
+}
