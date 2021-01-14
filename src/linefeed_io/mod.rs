@@ -12,20 +12,12 @@ impl<Term: Terminal> Completer<Term> for TableCompleter {
 
         self.tables.iter().for_each(|metadata| {
             if metadata.alias.starts_with(_word) {
-                completions.push(Completion {
-                    completion: metadata.alias.clone(),
-                    display: None,
-                    suffix: Suffix::Default
-                })
+                completions.push(Completion::simple(metadata.alias.clone()))
             }
 
             metadata.columns.iter().for_each(|(c, _)| {
                 if c.starts_with(_word) {
-                    completions.push(Completion {
-                        completion: c.clone(),
-                        display: None,
-                        suffix: Suffix::Default,
-                    })
+                    completions.push(Completion::simple(c.clone()))
                 }
             })
         });
