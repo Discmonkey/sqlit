@@ -4,7 +4,6 @@ use crate::table::Column;
 use crate::ops::binary_ops::{prepare_binary_args, MapType};
 use crate::result::ErrorType::{Type, Runtime};
 use std::cmp::max;
-use crate::parser::ParserNodeType::ColumnsCommand;
 
 // binary ops
 pub (super) struct Multiply{}

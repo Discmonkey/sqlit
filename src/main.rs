@@ -35,7 +35,6 @@ fn main() -> std::io::Result<()> {
 
     io.set_prompt("sqlit> ");
 
-
     // get ops
     let mut ops = ops::OpContext::new();
 

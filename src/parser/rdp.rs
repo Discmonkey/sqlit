@@ -23,14 +23,7 @@ impl RecursiveDescentParser {
     }
 
     pub fn parse(&mut self) -> ParserResult {
-
-        if self.next_token_is("columns") {
-            self.parse_column_command()
-        } else if self.next_token_is("tables") {
-            self.parse_tables_command()
-        } else {
-            self.parse_query()
-        }
+        self.parse_query()
     }
 
     fn next_token_is(&self, value: &str) -> bool {
@@ -91,21 +84,6 @@ impl RecursiveDescentParser {
                 }
             }
         }
-    }
-
-    fn parse_column_command(&mut self) -> ParserResult {
-        let node = ParserNode::new(ParserNodeType::ColumnsCommand);
-        self.get_required_token_by_value("columns", "column command must be invoked with columns")?;
-
-        Ok(node)
-    }
-
-    fn parse_tables_command(&mut self) -> ParserResult {
-        let node = ParserNode::new(ParserNodeType::TablesCommand);
-
-        self.get_required_token_by_value("tables", "tables command must be invoked with tablers")?;
-
-        Ok(node)
     }
 
     fn parse_query(&mut self) -> ParserResult {
