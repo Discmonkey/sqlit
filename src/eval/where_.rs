@@ -1,10 +1,9 @@
 use crate::parser::ParserNode;
 use crate::ops::OpContext;
-use crate::table::{Store, Table, Column};
+use crate::table::{Table, Column};
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Runtime, Type};
 use crate::eval::columns::eval_expression;
-use crate::table::ColumnType::Boolean;
 
 pub (super) fn eval(maybe_node: Option<ParserNode>, mut table: Table,
                     mut op_context: &mut OpContext) -> SqlResult<Table> {

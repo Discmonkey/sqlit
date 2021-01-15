@@ -7,7 +7,7 @@ mod boolean;
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::table::Column;
-use crate::result::ErrorType::{Lookup, Syntax, Runtime};
+use crate::result::ErrorType::{Lookup, Runtime};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
 

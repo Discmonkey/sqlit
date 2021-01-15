@@ -25,7 +25,6 @@ pub enum ParserNodeType {
     OrderBy,
     OrderByStatement,
     Into,
-    Target,
     Limit,
 }
 
@@ -52,24 +51,12 @@ impl ParserNode {
         self.tokens.push_back(token);
     }
 
-    pub fn node_type(&self) -> &ParserNodeType {
-        &self.node_type
-    }
-
-    pub fn get_children(&self) -> &VecDeque<ParserNode> {
-        &self.children
-    }
-
     pub fn get_tokens(&self) -> &VecDeque<Token> {
         &self.tokens
     }
 
     pub fn get_type(&self) -> &ParserNodeType {
         &self.node_type
-    }
-
-    pub fn set_type(&mut self, node_type: ParserNodeType) {
-        self.node_type = node_type
     }
 
     pub fn release(self) -> (ParserNodeType, VecDeque<Token>, VecDeque<ParserNode>) {

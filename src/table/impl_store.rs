@@ -5,11 +5,6 @@ use crate::result::ErrorType::{Lookup};
 use std::io;
 
 impl Store {
-    pub fn new() -> Self {
-        Self {
-            tables: HashMap::new()
-        }
-    }
 
     pub fn from_paths(csv_paths: Vec<String>) -> io::Result<Self> {
 
@@ -23,10 +18,6 @@ impl Store {
     pub fn get(&self, alias: &str) -> SqlResult<&Table> {
         self.tables.get(alias).ok_or(
             SqlError::new(format!("alias {} not found in store", alias).as_str(), Lookup))
-    }
-
-    pub fn tables(&self) -> Vec<String> {
-        self.tables.keys().map(|s| s.clone()).collect()
     }
 
     pub fn list(&self) -> Vec<&Table> {

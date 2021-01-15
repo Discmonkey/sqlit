@@ -1,8 +1,6 @@
 use crate::table::Column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::Runtime;
-use std::iter::Map;
-use std::path::Iter;
 
 #[derive(PartialOrd, PartialEq)]
 pub (super) enum MapType {
@@ -40,8 +38,8 @@ pub (super) fn prepare_binary_args(mut input: Vec<Column>) -> SqlResult<Annotate
 macro_rules! binary_iterate {
     ($l:expr, $r:expr, $sizes:expr, |($a:ident, $b:ident)| $block:block) => {
         {
-            let mut l = $l.into_iter();
-            let mut r = $r.into_iter();
+            let l = $l.into_iter();
+            let r = $r.into_iter();
 
             (if $sizes == MapType::SL {
                 l.cycle().zip(r).map(|($a, $b)| $block).collect()

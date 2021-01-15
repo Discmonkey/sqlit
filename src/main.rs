@@ -9,9 +9,7 @@ mod table;
 mod tokenizer;
 mod linefeed_io;
 use linefeed;
-use std::io;
 use crate::parser::rdp::RecursiveDescentParser;
-use crate::result::SqlResult;
 use std::sync::Arc;
 use crate::linefeed_io::TableCompleter;
 
@@ -27,13 +25,13 @@ fn main() -> std::io::Result<()> {
     let mut table_store = table::Store::from_paths(args.table_paths)?;
 
     // setting up io interface
-    let mut io = linefeed::Interface::new("sqlit")?;
+    let io = linefeed::Interface::new("sqlit")?;
 
     io.set_completer(
         Arc::new(
             TableCompleter::new(table_store.list().iter().map(|t| t.meta()).collect())));
 
-    io.set_prompt("sqlit> ");
+    io.set_prompt("sqlit> ")?;
 
     // get ops
     let mut ops = ops::OpContext::new();
@@ -46,7 +44,7 @@ fn main() -> std::io::Result<()> {
             io.add_history(input.trim().to_string());
         }
 
-        let mut tokens = toke.tokenize(input);
+        let tokens = toke.tokenize(input);
         let mut parser = RecursiveDescentParser::new(tokens);
 
         match parser.parse() {

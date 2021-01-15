@@ -1,4 +1,3 @@
-use crate::table::Column;
 use std::fmt;
 use std::error::Error;
 

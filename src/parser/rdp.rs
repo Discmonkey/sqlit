@@ -4,7 +4,7 @@ use crate::result::ErrorType::Syntax;
 use crate::tokenizer::TokenType::{Identifier, Literal};
 use crate::parser::rdp::ParserNodeType::{Where, GroupBy, OrderBy};
 use crate::parser::{ParserNode, ParserNodeType};
-use crate::parser::ParserNodeType::{Function, OrderByStatement};
+use crate::parser::ParserNodeType::{OrderByStatement};
 
 pub struct RecursiveDescentParser {
     tokens: Tokens,
@@ -280,11 +280,11 @@ impl RecursiveDescentParser {
 
         node.add_token(self.get_required_token_by_type(Identifier, "identifier required for function")?);
 
-        self.get_required_token_by_value("(", "missing opening paren");
+        self.get_required_token_by_value("(", "missing opening paren")?;
 
         node.add_child(self.parse_columns()?);
 
-        self.get_required_token_by_value(")", PAREN_ERROR);
+        self.get_required_token_by_value(")", PAREN_ERROR)?;
 
         Ok(node)
     }
@@ -345,7 +345,7 @@ impl RecursiveDescentParser {
         let mut node = ParserNode::new(GroupBy);
 
         self.get_required_token_by_value("group by",
-                                         "group by keyword required");
+                                         "group by keyword required")?;
 
         node.add_token(self.get_required_token_by_type(Identifier,
                                         "group by requires at least one column name")?);
@@ -365,7 +365,7 @@ impl RecursiveDescentParser {
         let mut node = ParserNode::new(OrderBy);
 
         self.get_required_token_by_value("order by",
-                                         "order by keyword required");
+                                         "order by keyword required")?;
 
         node.add_child(self.parse_order_by_statement()?);
 

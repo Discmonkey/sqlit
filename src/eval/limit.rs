@@ -6,7 +6,7 @@ use crate::result::ErrorType::{Runtime, Type};
 pub (super) fn eval(maybe_node: Option<ParserNode>, mut table: Table) -> SqlResult<Table> {
     match maybe_node {
         None => Ok(table),
-        Some(mut node) => {
+        Some(node) => {
             let (_, _, mut children) = node.release();
             let literal = children.pop_front().ok_or(SqlError::new("empty limit clause", Runtime))?;
 

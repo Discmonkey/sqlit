@@ -1,8 +1,6 @@
 use regex::Regex;
 use std::fmt;
 use std::collections::VecDeque;
-use crate::result::SqlResult;
-
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
@@ -49,10 +47,6 @@ impl Token {
         }
     }
 
-    pub fn get_type(&self) -> TokenType {
-        self.token_type
-    }
-
     pub fn get_text(&self) -> &String {
         &self.text
     }
@@ -78,9 +72,6 @@ pub type Tokens = VecDeque<Token>;
 pub struct Tokenizer {
     re: Regex,
 }
-
-pub type ErrorIndex = usize;
-
 
 impl Tokenizer {
 

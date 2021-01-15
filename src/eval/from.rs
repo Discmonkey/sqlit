@@ -4,7 +4,7 @@ use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use crate::result::ErrorType::{Syntax};
 
-fn from_statement_to_table(node: ParserNode, ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
+fn from_statement_to_table(node: ParserNode, _ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
     let (_, mut tokens, _) = node.release();
 
     tables.get(tokens.pop_front().unwrap().get_text()).map(|t| {

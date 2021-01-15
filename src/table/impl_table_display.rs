@@ -1,46 +1,44 @@
 use crate::table::{Table, Column};
 use std::io::Write;
-use crate::parser::ParserNodeType::Columns;
 use std::fmt::Display;
 use std::cmp::max;
 use chrono::NaiveDateTime;
-use rayon::prelude::*;
 
-fn item_width(dest: &mut Vec<u8>, writable: &dyn Display) -> usize {
+fn item_width(dest: &mut Vec<u8>, writable: &dyn Display) -> std::io::Result<usize> {
     dest.truncate(0);
 
-    write!(dest, "{}", writable);
+    write!(dest, "{}", writable)?;
 
-    dest.len()
+    Ok(dest.len())
 }
 
 fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
     let mut dest = Vec::new();
-    let mut max_length = item_width(&mut dest, name);
+    let mut max_length = item_width(&mut dest, name)?;
 
     match col {
         Column::Strings(s) => {
-            s.iter().for_each(|string| {
-                max_length = max(item_width(&mut dest, string), max_length);
-            });
+            for string in s.iter() {
+                max_length = max(item_width(&mut dest, string)?, max_length);
+            }
         },
 
         Column::Ints(i) => {
-            i.iter().for_each(|int| {
-                max_length = max(item_width(&mut dest, int), max_length);
-            });
+            for int in i.iter() {
+                max_length = max(item_width(&mut dest, int)?, max_length);
+            }
         },
 
         Column::Floats(f) => {
-            f.iter().for_each(|float| {
-                max_length = max(item_width(&mut dest, float), max_length);
-            });
+            for float in f.iter() {
+                max_length = max(item_width(&mut dest, float)?, max_length);
+            }
         },
 
         Column::Dates(d) => {
-            d.iter().for_each(|timestamp| {
-                max_length = max(item_width(&mut dest, &NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string()), max_length);
-            });
+            for timestamp in d.iter() {
+                max_length = max(item_width(&mut dest, &NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string())?, max_length);
+            }
         },
 
         Column::Booleans(_) => {
@@ -57,7 +55,7 @@ fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
 
 fn write_entry(f: &mut std::fmt::Formatter, lengths: &Vec<usize>,
                col: usize, writable: &dyn Display, scratch: &mut Vec<u8>) -> std::fmt::Result {
-    let mut write_width = item_width(scratch, writable);
+    let mut write_width = item_width(scratch, writable).map_err(|_| std::fmt::Error::default())?;
 
     write!(f, "{}", writable)?;
 
@@ -73,7 +71,7 @@ impl std::fmt::Display for Table {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let column_print_widths = self.columns.iter().zip(self.column_names.iter()).map(|(c, s)| {
             find_column_width(c, s)
-        }).collect::<std::io::Result<Vec<usize>>>().map_err(|e| {
+        }).collect::<std::io::Result<Vec<usize>>>().map_err(|_| {
             std::fmt::Error::default()
         })?;
 
@@ -81,7 +79,7 @@ impl std::fmt::Display for Table {
         let mut scratch = Vec::new();
 
         for (num, name) in self.column_names.iter().enumerate() {
-            write_entry(f, &column_print_widths, num, name, &mut scratch);
+            write_entry(f, &column_print_widths, num, name, &mut scratch)?;
         }
 
         writeln!(f)?;

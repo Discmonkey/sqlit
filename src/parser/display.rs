@@ -6,22 +6,22 @@ use std::io::Write;
 fn node_print_size(node: &ParserNode) -> usize {
     let mut printable: Vec<u8> = Vec::new();
 
-    write_once(node, &mut printable);
-
-
-    printable.len()
+    match write_once(node, &mut printable) {
+        Err(_) => 0,
+        Ok(_) => printable.len()
+    }
 }
 
 fn find_node_size(node: &ParserNode) -> usize {
     max(node_print_size(node), node.children.iter().map(|child| find_node_size(child)).sum())
 }
 
-fn write_once(node: &ParserNode, f: &mut impl Write) -> Result {
-    write!(f, "{:?} ", node.node_type);
+fn write_once(node: &ParserNode, f: &mut impl Write) -> std::io::Result<()> {
+    write!(f, "{:?} ", node.node_type)?;
 
-    node.tokens.iter().for_each(|t| {
-        write!(f, "{:?} ", t.get_text());
-    });
+    for t in node.tokens.iter() {
+        write!(f, "{:?} ", t.get_text())?;
+    }
 
     Ok(())
 }
@@ -67,7 +67,7 @@ fn write_to_vec(offsets: &mut Vec<Vec<usize>>,
                 writes: &mut Vec<Vec<u8>>,
                 column_counters: &mut Vec<usize>,
                 node: &ParserNode,
-                coord: Coord) {
+                coord: Coord) -> std::io::Result<()> {
 
     while coord.row + 1 > writes.len() {
         writes.push(Vec::new());
@@ -78,20 +78,22 @@ fn write_to_vec(offsets: &mut Vec<Vec<usize>>,
     }
 
     while writes[coord.row].len() < offsets[coord.row][coord.column] {
-        write!(writes[coord.row], "{}", ' ');
+        write!(writes[coord.row], "{}", ' ')?;
     }
 
     let _ = write_once(node, &mut writes[coord.row]);
 
-    node.children.iter().for_each(|child| {
+    for child in node.children.iter() {
         let row = coord.row + 1;
         let column = column_counters[row];
         write_to_vec(offsets, writes, column_counters, child, Coord {
             row, column
-        });
+        })?;
 
         column_counters[row] += 1;
-    });
+    }
+
+    Ok(())
 }
 
 
@@ -104,7 +106,8 @@ impl Display for ParserNode {
         let mut column_counters = Vec::new();
 
         fill_offsets(&mut offsets, self, Coord{row: 0, column: 0}, 0);
-        write_to_vec(&mut offsets, &mut writes, &mut column_counters, self, Coord{row: 0, column: 0});
+        write_to_vec(&mut offsets, &mut writes, &mut column_counters, self, Coord{row: 0, column: 0})
+            .map_err(|_| std::fmt::Error::default())?;
 
         for v in writes.iter() {
             writeln!(f, "{}", String::from_utf8(v.clone()).unwrap())?;

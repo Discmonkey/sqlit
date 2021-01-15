@@ -1,17 +1,14 @@
 use crate::ops::OpContext;
 use crate::parser::{ParserNode, ParserNodeType};
 use crate::result::{SqlResult, SqlError};
-use crate::table::{Table, Column, NamedColumn};
-use crate::result::ErrorType;
+use crate::table::{Table, NamedColumn};
 use crate::result::ErrorType::{Runtime, Syntax};
 use std::collections::VecDeque;
 use crate::tokenizer::Token;
-use crate::parser::ParserNodeType::Columns;
-use crate::converters::{ToBool, Converter};
 use crate::build_column::build_column;
 
 
-pub (super) fn eval(mut node: Option<ParserNode>, op_context: &mut OpContext, table: &Table) -> SqlResult<Table> {
+pub (super) fn eval(node: Option<ParserNode>, op_context: &mut OpContext, table: &Table) -> SqlResult<Table> {
     let columns_root = node.ok_or(SqlError::new("no columns provided", Runtime))?;
 
     let (_, _, children) = columns_root.release();
@@ -67,22 +64,22 @@ fn left_associative_helper(mut tokens: VecDeque<Token>,
 }
 
 fn eval_equality(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
-    let (_, mut tokens, mut nodes) = node.release();
+    let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, eval_comparison)
 }
 
 fn eval_comparison(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
-    let (_, mut tokens, mut nodes) = node.release();
+    let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, eval_term)
 }
 
 fn eval_term(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
-    let (_, mut tokens, mut nodes) = node.release();
+    let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, eval_factor)
 }
 
 fn eval_factor(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
-    let (_, mut tokens, mut nodes) = node.release();
+    let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, eval_unary)
 }
 
@@ -165,18 +162,8 @@ fn eval_function(node: ParserNode, op_context: &mut OpContext, table: &Table) ->
     })
 }
 
-fn make_columns_node(mut nodes: VecDeque<ParserNode>) -> ParserNode {
-    let mut node = ParserNode::new(Columns);
-
-    while nodes.len() > 0 {
-        node.add_child(nodes.pop_front().unwrap())
-    }
-
-    node
-}
-
 fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
-    let (_, mut tokens, _) = node.release();
+    let (_, tokens, _) = node.release();
 
     Ok(NamedColumn {
         column: build_column(tokens.iter().map(|t| t.get_text().clone()).collect()),

@@ -2,7 +2,7 @@ use crate::ops::MapOp;
 use crate::result::{SqlResult, SqlError};
 use crate::table::Column;
 use crate::ops::binary_ops::prepare_binary_args;
-use crate::result::ErrorType::{Syntax, Runtime, Type};
+use crate::result::ErrorType::{Runtime, Type};
 use super::binary_ops::MapType;
 
 // binary ops
@@ -14,10 +14,6 @@ pub (super) struct Xor{}
 
 // single ops
 pub (super) struct Not{}
-
-// reduce ops
-pub (super) struct Any{}
-pub (super) struct All{}
 
 // compare ops
 pub (super) struct Less{}
@@ -82,7 +78,7 @@ binary_op_comp!(NotEqual, !=);
 macro_rules! binary_op_comp_relative {
     ($target_struct: ident, $op: tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, mut arguments: Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {

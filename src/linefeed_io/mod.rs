@@ -1,5 +1,5 @@
 use crate::table::TableMeta;
-use linefeed::{Completer, Prompter, Completion, Suffix, Terminal};
+use linefeed::{Completer, Prompter, Completion, Terminal};
 
 pub struct TableCompleter {
     tables: Vec<TableMeta>
