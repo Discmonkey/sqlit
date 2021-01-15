@@ -12,7 +12,7 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
 
     let from_table = from::eval(parts.from, op_context, table_context)?;
 
-    let filtered_from = where_::eval(parts.where_, from_table, op_context, table_context)?;
+    let filtered_from = where_::eval(parts.where_, from_table, op_context)?;
 
     let mut selected_table = columns::eval(parts.columns, op_context, &filtered_from)?;
 

@@ -142,6 +142,13 @@ impl Table {
         self.columns
     }
 
+    pub fn where_(&mut self, mask: Vec<bool>) {
+        let new_columns: Vec<Column> = self.columns.iter().map(|c| {
+            c.select(&mask)
+        }).collect();
+
+        self.columns = new_columns;
+    }
 }
 
 // trim string from white spaces, also replace "|' from first and last characters

@@ -8,17 +8,22 @@ use super::binary_ops::MapType;
 // binary ops
 pub (super) struct Or{}
 pub (super) struct And{}
-pub (super) struct Not{}
 pub (super) struct Equal{}
 pub (super) struct NotEqual{}
 pub (super) struct Xor{}
 
 // single ops
-
+pub (super) struct Not{}
 
 // reduce ops
 pub (super) struct Any{}
 pub (super) struct All{}
+
+// compare ops
+pub (super) struct Less{}
+pub (super) struct Greater{}
+pub (super) struct LessOrEqual{}
+pub (super) struct GreaterOrEqual{}
 
 macro_rules! binary_op_bool {
 
@@ -73,6 +78,31 @@ macro_rules! binary_op_comp {
 
 binary_op_comp!(Equal, ==);
 binary_op_comp!(NotEqual, !=);
+
+macro_rules! binary_op_comp_relative {
+    ($target_struct: ident, $op: tt) => {
+        impl MapOp for $target_struct {
+            fn apply(&self, mut arguments: Vec<Column>) -> SqlResult<Column> {
+                let inputs = prepare_binary_args(arguments)?;
+
+                match (inputs.left, inputs.right) {
+                    dd!(l, r) => right_side!(l, r, inputs.sizes, >),
+                    ff!(l, r) => right_side!(l, r, inputs.sizes, >),
+                    ii!(l, r) => right_side!(l, r, inputs.sizes, >),
+                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a as f64 > b}))),
+                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a > b as f64}))),
+                    _ => Err(SqlError::new("incompatible types for boolean comparison", Type))
+                }
+            }
+        }
+    }
+}
+
+binary_op_comp_relative!(Less, <);
+// binary_op_comp_relative!(Greater, >);
+// binary_op_comp_relative!(LessOrEqual, <=);
+// binary_op_comp_relative!(GreaterOrEqual, >=);
+
 
 impl MapOp for Not {
     fn apply(&self, mut arguments: Vec<Column>) -> SqlResult<Column> {

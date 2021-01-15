@@ -13,6 +13,16 @@ macro_rules! apply {
     }
 }
 
+fn select<T: Clone>(values: &Vec<T>, selections: &Vec<bool>) -> Vec<T> {
+    values.into_iter().zip(selections.iter()).filter_map(|(val, s)| {
+        if *s {
+            Some(val.clone())
+        } else {
+            None
+        }
+    }).collect()
+}
+
 impl Column {
     pub fn limit(&mut self, length: usize) {
         apply!(self, truncate, length);
@@ -20,6 +30,17 @@ impl Column {
 
     pub fn len(&self) -> usize {
         apply!(self, len,)
+    }
+
+
+    pub fn select(&self, selections: &Vec<bool>) -> Self {
+        match self {
+            Column::Booleans(v) => Column::Booleans(select(v, selections)),
+            Column::Ints(v) => Column::Ints(select(v, selections)),
+            Column::Floats(v) => Column::Floats(select(v, selections)),
+            Column::Strings(v) => Column::Strings(select(v, selections)),
+            Column::Dates(v) => Column::Dates(select(v, selections)),
+        }
     }
 
     pub fn type_(&self) -> ColumnType {

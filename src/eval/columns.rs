@@ -7,6 +7,8 @@ use crate::result::ErrorType::{Runtime, Syntax};
 use std::collections::VecDeque;
 use crate::tokenizer::Token;
 use crate::parser::ParserNodeType::Columns;
+use crate::converters::{ToBool, Converter};
+use crate::build_column::build_column;
 
 
 pub (super) fn eval(mut node: Option<ParserNode>, op_context: &mut OpContext, table: &Table) -> SqlResult<Table> {
@@ -27,7 +29,7 @@ pub (super) fn eval(mut node: Option<ParserNode>, op_context: &mut OpContext, ta
     Ok(table)
 }
 
-fn eval_expression(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
+pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
     let (_, _, mut children) = node.release();
 
     let child = children.pop_front().ok_or(SqlError::new("empty expression", Runtime))?;
@@ -112,6 +114,7 @@ fn eval_primary(node: ParserNode, op_context: &mut OpContext, table: &Table) -> 
     match next_node.get_type() {
         ParserNodeType::Identifier => eval_identifier(next_node, table),
         ParserNodeType::Function => eval_function(next_node, op_context, table),
+        ParserNodeType::Literal => eval_literal(next_node),
         _ => Err(SqlError::new("only identifiers currently supported", Runtime))
     }
 }
@@ -170,4 +173,13 @@ fn make_columns_node(mut nodes: VecDeque<ParserNode>) -> ParserNode {
     }
 
     node
+}
+
+fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
+    let (_, mut tokens, _) = node.release();
+
+    Ok(NamedColumn {
+        column: build_column(tokens.iter().map(|t| t.get_text().clone()).collect()),
+        name: "".to_string(),
+    })
 }

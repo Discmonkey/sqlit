@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::{Lookup, Syntax, Runtime};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
-use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor};
+use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual};
+use std::cmp::Ordering::Greater;
 
 pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
@@ -46,7 +47,12 @@ impl OpContext {
         context.set_apply("and", Box::new(And{}));
         context.set_apply("xor", Box::new(Xor{}));
         context.set_apply("!=", Box::new(NotEqual{}));
-        context.set_apply("==", Box::new(Equal{}));
+        context.set_apply("=", Box::new(Equal{}));
+
+        // context.set_apply(">", Box::new(Greater{}));
+        context.set_apply("<", Box::new(Less{}));
+        // context.set_apply(">=", Box::new(GreaterOrEqual{}));
+        // context.set_apply("<=", Box::new(LessOrEqual{}));
 
         context
     }

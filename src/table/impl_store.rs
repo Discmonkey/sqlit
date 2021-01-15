@@ -44,7 +44,7 @@ mod test {
         let mut s = Store::from_paths(vec!["test/nba.games.stats.csv".to_string()])?;
 
 
-        match s.get(&"nba_games_stats") {
+        match s.get("nba_games_stats") {
             Ok(t) => assert!(true),
             Err(e) => assert!(false),
         };
