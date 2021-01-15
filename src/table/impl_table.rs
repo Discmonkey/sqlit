@@ -32,7 +32,7 @@ impl Table {
         self.alias.clone()
     }
 
-    pub fn from_file(file_location: &str) -> Result<Self, std::io::Error> {
+    pub fn from_file(file_location: &str, separator: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
         let alias = extract_table_name(file_location)
@@ -42,7 +42,7 @@ impl Table {
 
         let column_line = lines.next().ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"))?;
 
-        let column_names = parse_header_line(column_line?);
+        let column_names = parse_header_line(column_line?, separator);
 
         let column_map = create_column_map(&alias, &column_names);
 
@@ -51,7 +51,7 @@ impl Table {
         let mut num_rows = 0;
         for line in lines {
             num_rows += 1;
-            parse_line(line?).into_iter().enumerate().for_each(|(num, s)| {
+            parse_line(line?, separator).into_iter().enumerate().for_each(|(num, s)| {
                 raw_string_columns[num].push(s);
             });
         }
@@ -159,12 +159,12 @@ fn clean(raw: &str) -> String {
     s
 }
 
-fn parse_line(line: String) -> Vec<String> {
-    line.split(",").map(clean).collect()
+fn parse_line(line: String, separator: &str) -> Vec<String> {
+    line.split(separator).map(clean).collect()
 }
 
-fn parse_header_line(header_line: String) -> Vec<String> {
-    parse_line(header_line).into_iter().enumerate().map(|(num, s)| {
+fn parse_header_line(header_line: String, separator: &str) -> Vec<String> {
+    parse_line(header_line, separator).into_iter().enumerate().map(|(num, s)| {
         if s.len() == 0 {
             num.to_string()
         } else {
@@ -204,7 +204,7 @@ mod test {
     fn build_table() {
         time_test!();
 
-        let parsed_table = table::Table::from_file("test/nba.games.stats.csv");
+        let parsed_table = table::Table::from_file("test/nba.games.stats.csv", ",");
 
         match parsed_table {
             Ok(t) => assert!(t.len() > 0),

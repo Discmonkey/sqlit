@@ -4,6 +4,7 @@ use clap::{App, Arg};
 pub struct Config {
     pub table_paths: Vec<String>,
     pub parse_columns: bool,
+    pub separator: String,
 }
 
 pub fn get() -> Config {
@@ -19,15 +20,21 @@ pub fn get() -> Config {
         .arg(Arg::new("column_help")
             .about("enter column names manually at startup")
             .short('c')
-            .long("columns")
-    ).get_matches();
+            .long("columns"))
+        .arg(Arg::new("separator")
+            .about("separator file uses between columns")
+            .short('s')
+            .long("separator")
+            .default_value(",")).get_matches();
 
     let table_paths: Vec<_> = matches.values_of("tables").unwrap().map(|s| s.to_string()).collect();
     let parse_columns = !(matches.occurrences_of("column_help") > 0);
+    let separator = matches.value_of("separator").unwrap().to_string();
 
     Config {
         table_paths,
         parse_columns,
+        separator
     }
 
 }

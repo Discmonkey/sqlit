@@ -22,7 +22,7 @@ fn main() -> std::io::Result<()> {
     let toke = tokenizer::Tokenizer::new();
 
     // loading tables
-    let mut table_store = table::Store::from_paths(args.table_paths)?;
+    let mut table_store = table::Store::from_paths(args.table_paths, args.separator.as_str())?;
 
     // setting up io interface
     let io = linefeed::Interface::new("sqlit")?;
