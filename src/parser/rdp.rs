@@ -416,9 +416,7 @@ impl RecursiveDescentParser {
 
         self.get_required_token_by_value("limit", "mis-configured limit clause")?;
 
-        node.add_token(
-            self.get_required_token_by_type(
-                Literal, "limit clause only supports integral limits")?);
+        node.add_child(self.parse_literal()?);
 
         Ok(node)
     }

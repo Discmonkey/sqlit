@@ -1,4 +1,4 @@
-use crate::eval::{split, where_};
+use crate::eval::{split, where_, limit};
 use crate::table::{Table, Store as TableContext};
 use crate::parser::ParserNode;
 use crate::ops::OpContext;
@@ -14,9 +14,9 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
 
     let filtered_from = where_::eval(parts.where_, from_table, op_context)?;
 
-    let mut selected_table = columns::eval(parts.columns, op_context, &filtered_from)?;
+    let selected_table = columns::eval(parts.columns, op_context, &filtered_from)?;
 
-    selected_table.limit(10);
+    let limited_table = limit::eval(parts.limit, selected_table)?;
 
-    Ok(selected_table)
+    Ok(limited_table)
 }
