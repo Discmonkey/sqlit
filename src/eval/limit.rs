@@ -23,7 +23,6 @@ pub (super) fn eval(maybe_node: Option<ParserNode>, mut table: Table) -> SqlResu
 
             table.limit(limit_by);
 
-
             Ok(table)
         }
     }
