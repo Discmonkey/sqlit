@@ -29,7 +29,7 @@ pub (super) fn prepare_binary_args(mut input: Vec<Column>) -> SqlResult<Annotate
         Ok(AnnotatedInput {left, right, sizes: MapType::LL})
     } else if left.len() == 1 {
         Ok(AnnotatedInput {left, right, sizes: MapType::SL})
-    } else if right.len() == 2{
+    } else if right.len() == 1 {
         Ok(AnnotatedInput {left, right, sizes: MapType::LS})
     } else {
         Err(SqlError::new("mismatched column lengths in binary ops", Runtime))

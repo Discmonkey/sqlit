@@ -86,11 +86,11 @@ macro_rules! binary_op_comp_relative {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
-                    dd!(l, r) => right_side!(l, r, inputs.sizes, >),
-                    ff!(l, r) => right_side!(l, r, inputs.sizes, >),
-                    ii!(l, r) => right_side!(l, r, inputs.sizes, >),
-                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a as f64 > b}))),
-                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a > b as f64}))),
+                    dd!(l, r) => right_side!(l, r, inputs.sizes, $op),
+                    ff!(l, r) => right_side!(l, r, inputs.sizes, $op),
+                    ii!(l, r) => right_side!(l, r, inputs.sizes, $op),
+                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {(a as f64) $op b}))),
+                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a $op (b as f64)}))),
                     _ => Err(SqlError::new("incompatible types for boolean comparison", Type))
                 }
             }
@@ -99,9 +99,9 @@ macro_rules! binary_op_comp_relative {
 }
 
 binary_op_comp_relative!(Less, <);
-// binary_op_comp_relative!(Greater, >);
-// binary_op_comp_relative!(LessOrEqual, <=);
-// binary_op_comp_relative!(GreaterOrEqual, >=);
+binary_op_comp_relative!(Greater, >);
+binary_op_comp_relative!(LessOrEqual, <=);
+binary_op_comp_relative!(GreaterOrEqual, >=);
 
 
 impl MapOp for Not {
