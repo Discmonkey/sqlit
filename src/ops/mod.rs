@@ -2,12 +2,14 @@
 mod binary_ops;
 
 mod math;
+mod boolean;
 
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::{Lookup, Syntax, Runtime};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
+use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor};
 
 pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
@@ -39,6 +41,13 @@ impl OpContext {
         context.set_reduce("mean", Box::new(Mean{}));
         context.set_reduce("sum", Box::new(Sum{}));
 
+        context.set_apply("!", Box::new(Not{}));
+        context.set_apply("or", Box::new(Or{}));
+        context.set_apply("and", Box::new(And{}));
+        context.set_apply("xor", Box::new(Xor{}));
+        context.set_apply("!=", Box::new(NotEqual{}));
+        context.set_apply("==", Box::new(Equal{}));
+
         context
     }
 
@@ -57,9 +66,11 @@ impl OpContext {
     pub fn dispatch(&self, function: &str, mut arguments: Vec<Column>) -> SqlResult<Column> {
         if self.applies.contains_key(function) {
             self.apply(function, arguments)
-        } else {
+        } else if self.reducers.contains_key(function) {
             self.reduce(function, arguments.pop().ok_or(
                 SqlError::new("reducer called without arguments", Runtime))?)
+        } else {
+            Err(SqlError::new("could not find function", Lookup))
         }
     }
 

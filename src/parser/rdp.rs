@@ -187,7 +187,7 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_term()?);
 
-        while [">", ">=", "<", "<="].iter().any(|val| self.next_token_is(val)) {
+        while [">", ">=", "<", "<=", "and", "or", "xor"].iter().any(|val| self.next_token_is(val)) {
             node.add_token(self.tokens.pop_front().unwrap());
             node.add_child(self.parse_term()?);
         }

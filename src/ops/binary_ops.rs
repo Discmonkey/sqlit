@@ -54,6 +54,59 @@ macro_rules! binary_iterate {
     }
 }
 
+#[macro_export]
+macro_rules! bb {
+    ($l:ident, $r:ident) => {
+        (Column::Booleans($l), Column::Booleans($r))
+    }
+}
+
+#[macro_export]
+macro_rules! ff {
+    ($l:ident, $r:ident) => {
+        (Column::Floats($l), Column::Floats($r))
+    }
+}
+
+#[macro_export]
+macro_rules! ii {
+    ($l:ident, $r:ident) => {
+        (Column::Ints($l), Column::Ints($r))
+    }
+}
+
+#[macro_export]
+macro_rules! dd {
+    ($l:ident, $r:ident) => {
+        (Column::Dates($l), Column::Dates($r))
+    }
+}
+
+#[macro_export]
+macro_rules! ss {
+    ($l:ident, $r:ident) => {
+        (Column::Strings($l), Column::Strings($r))
+    }
+}
+
+#[macro_export]
+macro_rules! fi {
+    ($l:ident, $r:ident) => {
+        (Column::Floats($l), Column::Ints($r))
+    }
+}
+
+#[macro_export]
+macro_rules! if_ {
+    ($l:ident, $r:ident) => {
+        (Column::Ints($l), Column::Floats($r))
+    }
+}
+
+
+
+
+
 #[cfg(test)]
 mod test {
     use crate::ops::binary_ops::MapType;
