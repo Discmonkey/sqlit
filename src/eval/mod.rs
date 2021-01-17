@@ -10,6 +10,7 @@ mod select;
 mod columns;
 mod where_;
 mod limit;
+mod order_by;
 
 pub fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &mut TableContext) -> SqlResult<Box<dyn std::fmt::Display>> {
     match root.get_type() {

@@ -21,15 +21,14 @@ pub fn get() -> Config {
             .about("enter column names manually at startup")
             .short('c')
             .long("columns"))
-        .arg(Arg::new("separator")
+        .arg(Arg::new("tsv")
             .about("separator file uses between columns")
-            .short('s')
-            .long("separator")
-            .default_value(",")).get_matches();
+            .short('t')
+            .long("tsv")).get_matches();
 
     let table_paths: Vec<_> = matches.values_of("tables").unwrap().map(|s| s.to_string()).collect();
     let parse_columns = !(matches.occurrences_of("column_help") > 0);
-    let separator = matches.value_of("separator").unwrap().to_string();
+    let separator = if matches.occurrences_of("tsv") > 0 { "\t" } else {","}.to_string();
 
     Config {
         table_paths,

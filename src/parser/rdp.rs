@@ -382,7 +382,7 @@ impl RecursiveDescentParser {
 
         node.add_token(self.get_required_token_by_type(Identifier, "can only order on columns")?);
 
-        if self.next_token_is("ASC") || self.next_token_is("DESC") {
+        if self.next_token_is("asc") || self.next_token_is("desc") {
             node.add_token(self.tokens.pop_front().unwrap())
         }
 

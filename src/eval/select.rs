@@ -5,7 +5,7 @@ use crate::ops::OpContext;
 use crate::result::{SqlResult};
 use crate::eval::from;
 use super::columns;
-
+use super::order_by;
 
 pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &mut TableContext) -> SqlResult<Table> {
     let parts = split::split(root)?;
@@ -16,7 +16,9 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
 
     let selected_table = columns::eval(parts.columns, op_context, &filtered_from)?;
 
-    let limited_table = limit::eval(parts.limit, selected_table)?;
+    let ordered_table = order_by::eval(parts.order_by, selected_table)?;
+
+    let limited_table = limit::eval(parts.limit, ordered_table)?;
 
     Ok(limited_table)
 }
