@@ -2,6 +2,7 @@ mod impl_table;
 mod impl_store;
 mod impl_table_display;
 mod impl_column;
+mod impl_table_hash;
 
 use std::collections::HashMap;
 

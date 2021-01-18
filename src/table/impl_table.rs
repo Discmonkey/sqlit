@@ -138,20 +138,32 @@ impl Table {
         }).collect()
     }
 
-    pub fn where_(&mut self, mask: Vec<bool>) {
-        let new_columns: Vec<Column> = self.columns.iter().map(|c| {
-            c.select(&mask)
-        }).collect();
-
-        self.columns = new_columns;
-    }
-
-    pub fn order_by(&mut self, order_vec: Vec<usize>) {
-        let new_columns: Vec<Column> = self.columns.iter().map(|c| {
+    pub fn order_by(&mut self, order_vec: Vec<usize>) -> Self {
+        let columns: Vec<Column> = self.columns.iter().map(|c| {
             c.order(&order_vec)
         }).collect();
 
-        self.columns = new_columns;
+        Self {
+            columns,
+            column_names: self.column_names.clone(),
+            alias: self.alias.clone(),
+            num_rows: self.num_rows,
+            column_map: self.column_map.clone(),
+        }
+    }
+
+    pub fn where_(&self, mask: Vec<bool>) -> Self {
+        let columns: Vec<Column> = self.columns.iter().map(|c| {
+            c.select(&mask)
+        }).collect();
+
+        Self {
+            columns,
+            column_names: self.column_names.clone(),
+            alias: self.alias.clone(),
+            num_rows: self.num_rows,
+            column_map: self.column_map.clone(),
+        }
     }
 }
 

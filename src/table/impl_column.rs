@@ -1,5 +1,6 @@
 use crate::table::{Column, ColumnType};
 use std::cmp::Ordering;
+use std::hash::Hash;
 
 
 macro_rules! apply {
@@ -100,7 +101,6 @@ impl Column {
             Column::Strings(s) => s[i1].cmp(&s[i2])
         }
     }
-
 }
 
 #[cfg(test)]
