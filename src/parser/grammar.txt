@@ -46,7 +46,7 @@ where:
     WHERE <expression>
 
 group by:
-    GROUP BY qualified_identifier (, qualified_identifier)*
+    GROUP BY <columns>
 
 order by:
     ORDER BY <order_by_statement>

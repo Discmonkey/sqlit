@@ -130,8 +130,12 @@ impl Table {
         self.num_rows = max(self.num_rows, length);
     }
 
-    pub fn into_columns(self) -> Vec<Column> {
-        self.columns
+    pub fn into_columns(self) -> Vec<NamedColumn> {
+        self.columns.into_iter().zip(self.column_names.into_iter()).map(|(column, name)| {
+            NamedColumn {
+                column, name
+            }
+        }).collect()
     }
 
     pub fn where_(&mut self, mask: Vec<bool>) {

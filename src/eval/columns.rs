@@ -160,7 +160,7 @@ fn eval_function(node: ParserNode, op_context: &mut OpContext, table: &Table) ->
     let(_, mut tokens, mut nodes) = node.release();
 
     let table = eval(nodes.pop_front(), op_context, table)?;
-    let columns = table.into_columns();
+    let columns = table.into_columns().into_iter().map(|c| c.column).collect();
 
     let op = tokens.pop_front().ok_or(SqlError::new("function without name", Syntax))?;
 

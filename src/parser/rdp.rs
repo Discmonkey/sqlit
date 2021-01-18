@@ -353,16 +353,7 @@ impl RecursiveDescentParser {
         self.get_required_token_by_value("group by",
                                          "group by keyword required")?;
 
-        node.add_token(self.get_required_token_by_type(Identifier,
-                                        "group by requires at least one column name")?);
-
-        while self.next_token_is(",") {
-            self.next();
-
-            node.add_token(self.get_required_token_by_type(Identifier,
-                "malformed group by clause, can only only group on columns")?
-            )
-        }
+        node.add_child(self.parse_columns()?);
 
         Ok(node)
     }
