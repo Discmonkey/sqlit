@@ -36,9 +36,7 @@ pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> Sql
                 Ordering::Equal
             });
 
-            table.order_by(sort_order);
-
-            Ok(table)
+            Ok(table.order_by(sort_order))
         },
 
         None => Ok(table),

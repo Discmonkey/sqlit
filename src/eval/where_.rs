@@ -17,8 +17,7 @@ pub (super) fn eval(maybe_node: Option<ParserNode>, mut table: Table,
 
             match booleans {
                 Column::Booleans(b) => {
-                    table.where_(b);
-                    Ok(table)
+                    Ok(table.where_(b))
                 }
 
                 _ => Err(SqlError::new("where clause must evaluate to a boolean column", Type))
