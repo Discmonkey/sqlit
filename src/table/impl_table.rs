@@ -22,7 +22,6 @@ impl Table {
         Table {
             alias: "".to_string(),
             columns: Vec::new(),
-            num_rows: 0,
             column_map: HashMap::new(),
             column_names: Vec::new(),
         }
@@ -48,9 +47,7 @@ impl Table {
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
-        let mut num_rows = 0;
         for line in lines {
-            num_rows += 1;
             parse_line(line?, separator).into_iter().enumerate().for_each(|(num, s)| {
                 raw_string_columns[num].push(s);
             });
@@ -61,7 +58,7 @@ impl Table {
         ).collect();
 
         Ok(Table {
-            alias, column_map, column_names, columns, num_rows
+            alias, column_map, column_names, columns
         })
     }
 
@@ -127,7 +124,6 @@ impl Table {
             (table_name.to_string(), name),
             self.columns.len() - 1
         );
-        self.num_rows = max(self.num_rows, length);
     }
 
     pub fn into_columns(self) -> Vec<NamedColumn> {
@@ -147,7 +143,6 @@ impl Table {
             columns,
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
-            num_rows: self.num_rows,
             column_map: self.column_map.clone(),
         }
     }
@@ -161,7 +156,6 @@ impl Table {
             columns,
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
-            num_rows: self.num_rows,
             column_map: self.column_map.clone(),
         }
     }
