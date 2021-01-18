@@ -9,7 +9,7 @@ columns:
     <expression> (, <expression>)*
 
 expression:
-    <equality>
+    <equality> (as identifier)?
 
 equality:
     <comparison> ( "!=" | "==" <comparison> )*

@@ -95,7 +95,7 @@ impl Table {
     }
 
     pub fn len(&self) -> usize {
-        self.num_rows
+        self.columns.iter().map(|c| c.len()).max().unwrap_or(0)
     }
 
     pub fn limit(&mut self, length: usize) {
@@ -137,6 +137,14 @@ impl Table {
     pub fn where_(&mut self, mask: Vec<bool>) {
         let new_columns: Vec<Column> = self.columns.iter().map(|c| {
             c.select(&mask)
+        }).collect();
+
+        self.columns = new_columns;
+    }
+
+    pub fn order_by(&mut self, order_vec: Vec<usize>) {
+        let new_columns: Vec<Column> = self.columns.iter().map(|c| {
+            c.order(&order_vec)
         }).collect();
 
         self.columns = new_columns;

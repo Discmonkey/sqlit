@@ -262,7 +262,7 @@ impl RecursiveDescentParser {
 
         node.add_token(
             self.get_required_token_by_type(
-                Identifier, "missing table identifier")?);
+                Identifier, "missing column identifier")?);
 
         if self.next_token_is(".") {
             self.next();

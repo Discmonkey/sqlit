@@ -24,6 +24,20 @@ fn select<T: Clone>(values: &Vec<T>, selections: &Vec<bool>) -> Vec<T> {
     }).collect()
 }
 
+fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
+    let mut new_vec: Vec<T> = Vec::new();
+    new_vec.resize(values.len(), values[0].clone());
+
+    order.iter().enumerate().for_each(|(num, assignment)| {
+        if assignment < &new_vec.len() {
+            new_vec[num] = values[*assignment].clone()
+        }
+    });
+
+    new_vec
+}
+
+
 impl Column {
     pub fn limit(&mut self, length: usize) {
         apply!(self, truncate, length);
@@ -41,6 +55,16 @@ impl Column {
             Column::Floats(v) => Column::Floats(select(v, selections)),
             Column::Strings(v) => Column::Strings(select(v, selections)),
             Column::Dates(v) => Column::Dates(select(v, selections)),
+        }
+    }
+
+    pub fn order(&self, sort_order: &Vec<usize>) -> Self {
+        match self {
+            Column::Booleans(v) => Column::Booleans(order(v, sort_order)),
+            Column::Ints(v) => Column::Ints(order(v, sort_order)),
+            Column::Floats(v) => Column::Floats(order(v, sort_order)),
+            Column::Strings(v) => Column::Strings(order(v, sort_order)),
+            Column::Dates(v) => Column::Dates(order(v, sort_order)),
         }
     }
 
@@ -77,4 +101,27 @@ impl Column {
         }
     }
 
+}
+
+#[cfg(test)]
+mod test {
+    use crate::table::Column;
+
+    #[test]
+    fn test_order() {
+        let c = Column::Ints(vec![1, 2, 3, 4]);
+        let order = vec![3, 2, 1, 0];
+
+        let new = c.order(&order);
+
+        match new {
+            Column::Ints(mut i) => {
+                i.into_iter().zip((1..=4).rev()).for_each(|(a, b)| {
+                    assert_eq!(a, b);
+                })
+            },
+            _ => assert!(false)
+        }
+
+    }
 }

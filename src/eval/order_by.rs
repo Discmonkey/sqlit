@@ -7,10 +7,10 @@ use std::cmp::Ordering;
 
 struct Order<'a> {
     pub column: &'a Column,
-    pub asc: bool,
+    pub desc: bool,
 }
 
-pub (super) fn eval(maybe_order_by: Option<ParserNode>, table: Table) -> SqlResult<Table>{
+pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> SqlResult<Table>{
     match maybe_order_by {
         Some(mut order_by) => {
             let (_, _, clauses) = order_by.release();
@@ -18,15 +18,15 @@ pub (super) fn eval(maybe_order_by: Option<ParserNode>, table: Table) -> SqlResu
             let orders = parse_into_order(clauses, &table)?;
             let mut sort_order: Vec<usize> = (0..table.len()).collect();
 
-            sort_order.sort_by(|i, j| {
+            sort_order.sort_by(|&i, &j| {
                 for order in &orders {
                     let (mut a, mut b) = (i, j);
-                    if order.asc {
+                    if order.desc {
                         a = j;
                         b = i;
                     }
 
-                    let ordering = order.column.elem_order(*a, *b);
+                    let ordering = order.column.elem_order(a, b);
 
                     if ordering != Ordering::Equal {
                         return ordering;
@@ -35,6 +35,8 @@ pub (super) fn eval(maybe_order_by: Option<ParserNode>, table: Table) -> SqlResu
 
                 Ordering::Equal
             });
+
+            table.order_by(sort_order);
 
             Ok(table)
         },
@@ -54,12 +56,12 @@ fn parse_into_order(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult<Vec
             })
             .ok_or(SqlError::new("need at least one column in order by", Runtime))??;
 
-        let asc = tokens.pop_front().map(|t| {
-            t.is("asc")
+        let desc = tokens.pop_front().map(|t| {
+            t.is("desc")
         }).unwrap_or(false);
 
         Ok(Order {
-            column, asc
+            column, desc
         })
 
     }).collect::<SqlResult<Vec<Order>>>()
