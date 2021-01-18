@@ -18,11 +18,11 @@ pub enum ColumnType {
 
 #[derive(Clone, Debug)]
 pub enum Column {
-    Floats(Vec<f64>),
-    Ints(Vec<i64>),
-    Strings(Vec<String>),
-    Booleans(Vec<bool>),
-    Dates(Vec<DateTime>), // lets just unix timestamps, for now
+    Floats(Vec<Option<f64>>),
+    Ints(Vec<Option<i64>>),
+    Strings(Vec<Option<String>>),
+    Booleans(Vec<Option<bool>>),
+    Dates(Vec<Option<DateTime>>), // lets just unix timestamps, for now
 }
 
 

@@ -34,20 +34,13 @@ pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, tab
 
     let mut named_column = eval_equality(child, op_context, table)?;
 
-    match children.pop_front() {
-        None => Ok(named_column),
-        Some(node) => {
-            let (_, mut tokens, _) = node.release();
-
-            let column_name = tokens.pop_front().map(|t| {
-                t.get_text().clone()
-            }).ok_or(SqlError::new("as must be followed by identifier", Runtime))?;
-
-            named_column.name = column_name;
-
-            Ok(named_column)
-        }
+    if let Some(node) = children.pop_front() {
+        named_column.name = node.get_tokens().front().map(|t| {
+            t.get_text().clone()
+        }).ok_or(SqlError::new("as must be followed by identifier", Runtime))?;
     }
+
+    Ok(named_column)
 }
 
 
