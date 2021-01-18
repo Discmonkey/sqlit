@@ -144,6 +144,12 @@ impl RecursiveDescentParser {
 
         node.add_child(self.parse_equality()?);
 
+        if self.next_token_is("as") {
+            self.next();
+
+            node.add_child(self.parse_identifier()?);
+        }
+
         Ok(node)
     }
 

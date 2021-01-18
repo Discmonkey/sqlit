@@ -26,13 +26,30 @@ pub (super) fn eval(node: Option<ParserNode>, op_context: &mut OpContext, table:
     Ok(table)
 }
 
+
 pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
     let (_, _, mut children) = node.release();
 
     let child = children.pop_front().ok_or(SqlError::new("empty expression", Runtime))?;
 
-    eval_equality(child, op_context, table)
+    let mut named_column = eval_equality(child, op_context, table)?;
+
+    match children.pop_front() {
+        None => Ok(named_column),
+        Some(node) => {
+            let (_, mut tokens, _) = node.release();
+
+            let column_name = tokens.pop_front().map(|t| {
+                t.get_text().clone()
+            }).ok_or(SqlError::new("as must be followed by identifier", Runtime))?;
+
+            named_column.name = column_name;
+
+            Ok(named_column)
+        }
+    }
 }
+
 
 fn left_associative_helper(mut tokens: VecDeque<Token>,
                       mut nodes: VecDeque<ParserNode>,

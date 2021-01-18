@@ -62,6 +62,4 @@ impl ParserNode {
     pub fn release(self) -> (ParserNodeType, VecDeque<Token>, VecDeque<ParserNode>) {
         (self.node_type, self.tokens, self.children)
     }
-
-
 }
