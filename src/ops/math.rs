@@ -38,19 +38,19 @@ macro_rules! map_op_impl {
                 let input = prepare_binary_args(arguments)?;
 
                 match (input.left, input.right) {
-                    (Column::Ints(i1), Column::Ints(i2)) => {
+                    ii!(i1, i2) => {
                         Ok(Column::Ints(binary_iterate!(i1, i2, input.sizes, |(a, b)| {a $op b})))
                     },
 
-                    (Column::Floats(f1), Column::Floats(f2)) => {
+                    ff!(f1, f2) => {
                         Ok(Column::Floats(binary_iterate!(f1, f2, input.sizes, |(a, b)| {a $op b})))
                     },
 
-                    (Column::Floats(f1), Column::Ints(i2)) => {
+                    fi!(f1, i2) => {
                         Ok(Column::Floats(binary_iterate!(f1, i2, input.sizes, |(a, b)| {a $op b as f64})))
                     },
 
-                    (Column::Ints(i1), Column::Floats(f2)) => {
+                    if_!(i1, f2) => {
                         Ok(Column::Floats(binary_iterate!(i1, f2, input.sizes, |(a, b)| {a as f64 $op b})))
                     }
 
