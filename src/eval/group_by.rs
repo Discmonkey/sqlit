@@ -35,7 +35,7 @@ pub (super) fn eval(maybe_group_by_node: Option<ParserNode>,
             let (assignments, key_tables) = keys_to_assignments(&evaluated_keys);
 
             Ok(Either::Group(Grouped {
-                groups: key_tables.into_iter().enumerate().map(|(num, mut table)| {
+                groups: key_tables.into_iter().enumerate().map(|(num, mut key_table)| {
                     let selector = assignments.iter().map(|assignment| {
                         assignment == &num
                     }).collect();
@@ -43,10 +43,13 @@ pub (super) fn eval(maybe_group_by_node: Option<ParserNode>,
                     let selected_rows = table.where_(selector);
 
                     for column in selected_rows.into_columns() {
-                        table.push(column, None)
+                        // TODO figure out how to add all columns to a group by
+                        if let Err(_) = key_table.column_search(&column.name) {
+                            key_table.push(column, None)
+                        }
                     }
 
-                    table
+                    key_table
                     }).collect()
                 })
             )

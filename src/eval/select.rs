@@ -40,7 +40,7 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
 
             let merged_table = Table::from_tables(evaluated)?;
 
-            order_by::eval(parts.order_by.clone(), merged_table)?
+            order_by::eval(parts.order_by, merged_table)?
         }
 
         group_by::Either::Table(table) => columns::eval(parts.columns.clone(), op_context, &order_by::eval(parts.order_by, table)?)?
