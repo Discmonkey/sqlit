@@ -1,17 +1,14 @@
 use crate::parser::ParserNode;
-use crate::table::{Table, Column, NamedColumn};
+use crate::table::{Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
-
 use super::columns;
-
 use std::collections::HashMap;
 use crate::result::ErrorType::Runtime;
-use std::hash::Hash;
 
 
 pub (super) struct Grouped {
-    groups: Vec<Table>,
+    pub groups: Vec<Table>,
 }
 
 pub (super) enum Either {

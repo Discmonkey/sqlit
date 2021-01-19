@@ -5,9 +5,8 @@ use rayon::prelude::*;
 use std::path::Path;
 use crate::build_column::build_column;
 use crate::result::{SqlResult, SqlError};
-use crate::result::ErrorType::{Lookup};
+use crate::result::ErrorType::{Lookup, Runtime};
 use crate::table::{Table, Column, NamedColumn, TableMeta};
-use std::cmp::max;
 
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -60,6 +59,19 @@ impl Table {
         Ok(Table {
             alias, column_map, column_names, columns
         })
+    }
+    /// roughly equivalent to a union operation
+    pub fn from_tables(mut tables: Vec<Self>) -> SqlResult<Self> {
+        let mut first = tables.pop().ok_or(SqlError::new("cannot build table from empty result set",
+                                                     Runtime))?;
+
+        for table in tables.into_iter() {
+            for (num, c) in table.into_columns().into_iter().enumerate() {
+                &first.columns[num].merge(c.column);
+            }
+        };
+
+        Ok(first)
     }
 
     pub fn column(&self, table: &str, name: &str) -> Option<&Column> {
@@ -116,7 +128,6 @@ impl Table {
         let table_name = table.unwrap_or("");
         let name = column.name;
         let column = column.column;
-        let length = column.len();
 
         self.column_names.push(name.clone());
         self.columns.push(column);

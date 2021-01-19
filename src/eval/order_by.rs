@@ -12,7 +12,7 @@ struct Order<'a> {
 
 pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> SqlResult<Table>{
     match maybe_order_by {
-        Some(mut order_by) => {
+        Some(order_by) => {
             let (_, _, clauses) = order_by.release();
 
             let orders = parse_into_order(clauses, &table)?;
@@ -44,7 +44,7 @@ pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> Sql
 }
 
 fn parse_into_order(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult<Vec<Order>> {
-    nodes.into_iter().map(|mut n| {
+    nodes.into_iter().map(|n| {
         let (_, mut tokens, _) = n.release();
 
         let column = tokens

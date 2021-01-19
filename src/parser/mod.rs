@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 pub mod rdp;
 pub mod display;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ParserNodeType {
     Query,
     Columns,
@@ -28,6 +28,7 @@ pub enum ParserNodeType {
     Limit,
 }
 
+#[derive(Clone)]
 pub struct ParserNode {
     node_type: ParserNodeType,
     tokens: VecDeque<Token>, // in the case of certain operations / * +, a function call, etc

@@ -5,7 +5,7 @@ use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Runtime, Type};
 use crate::eval::columns::eval_expression;
 
-pub (super) fn eval(maybe_node: Option<ParserNode>, mut table: Table,
+pub (super) fn eval(maybe_node: Option<ParserNode>, table: Table,
                     mut op_context: &mut OpContext) -> SqlResult<Table> {
     match maybe_node {
         None => Ok(table),

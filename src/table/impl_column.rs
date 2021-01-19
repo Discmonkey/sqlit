@@ -1,7 +1,7 @@
 use crate::table::{Column, ColumnType};
 use std::cmp::Ordering;
-use std::hash::Hash;
-
+use crate::result::{SqlResult, SqlError};
+use crate::result::ErrorType::Runtime;
 
 macro_rules! apply {
     ($self: expr, $method: tt, $($arg:expr),*) => {
@@ -100,6 +100,31 @@ impl Column {
             Column::Dates(d) => d[i1].cmp(&d[i2]),
             Column::Strings(s) => s[i1].cmp(&s[i2])
         }
+    }
+
+    pub fn merge(&mut self, other: Self) -> SqlResult<()>{
+        macro_rules! other {
+            ($v1:ident, $t2:ident, $other:ident) => {
+                 if let Column::$t2(v2) = $other {
+                    v2.into_iter().for_each(|val| {
+                        $v1.push(val.clone());
+                    })
+                } else {
+                    return Err(SqlError::new("mismatched type on column merge", Runtime));
+                }
+            }
+        }
+
+        match self {
+            Column::Booleans(v1) => other!(v1, Booleans, other),
+            Column::Ints(v1) => other!(v1, Ints, other),
+            Column::Floats(v1) => other!(v1, Floats, other),
+            Column::Strings(v1) => other!(v1, Strings, other),
+            Column::Dates(v1) => other!(v1, Dates, other),
+        };
+
+
+        Ok(())
     }
 }
 
