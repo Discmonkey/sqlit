@@ -79,7 +79,7 @@ impl Tokenizer {
 
         let re = Regex::new(r#"(?xi)
             [\s]* #skip white spaces
-            (?P<keyword>SELECT|FROM|WHERE|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY\s+|INTO\s+|LIMIT\s+|ASC\s+|DESC\s+|AS\s+)
+            (?P<keyword>SELECT\s|FROM\s|WHERE\s|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY|INTO\s|LIMIT\s|ASC\s|DESC\s|AS\s)
             |
             (?P<operator>>=|<=|[-+/*><=]|or\s|and\s|!=)
             |
@@ -104,7 +104,7 @@ impl Tokenizer {
 
             for token_type in vec!(TokenType::Keyword, TokenType::Operator, TokenType::Literal, TokenType::Identifier, TokenType::Separator) {
                 if let Some(m) = cap.name(token_type.to_str()) {
-                    v.push_back(Token::new(m.to_string().to_lowercase(), token_type));
+                    v.push_back(Token::new(m.to_string().trim().to_lowercase(), token_type));
                 }
             }
         }

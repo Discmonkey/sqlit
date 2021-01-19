@@ -458,6 +458,31 @@ mod test {
 
             }
         }
+    }
+
+    #[test]
+    fn parse_as_clause() {
+        let t = Tokenizer::new();
+        let tokens = t.tokenize("SELECT mean(assists) as time FROM nba_games_stats".to_string());
+        let maybe_tree = RecursiveDescentParser::new(tokens).parse();
+
+        match maybe_tree {
+            Err(_e) => assert!(false),
+            Ok(tree) => {
+                let (mut type_, mut tokens, mut nodes) = tree.release();
+
+                assert_eq!(type_, ParserNodeType::Query);
+
+                let columns = nodes.pop_front().unwrap();
+                let from = nodes.pop_front().unwrap();
+
+                let (type_, tokens, nodes) = columns.release();
+
+                assert_eq!(type_, ParserNodeType::Columns);
+
+
+            }
+        }
 
     }
 }

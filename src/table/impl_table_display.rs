@@ -100,7 +100,9 @@ impl std::fmt::Display for Table {
                 }
             }
 
-            writeln!(f)?;
+            if i != max_length - 1 {
+                writeln!(f)?;
+            }
         }
 
         Ok(())
