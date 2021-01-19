@@ -11,7 +11,6 @@ use crate::table::Column;
 use crate::result::ErrorType::{Lookup, Runtime};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
-
 pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
 }
@@ -54,7 +53,7 @@ impl OpContext {
         context.set_apply(">=", Box::new(GreaterOrEqual{}));
         context.set_apply("<=", Box::new(LessOrEqual{}));
 
-        context.set_apply("year", Box::new(Year{}));
+        context.set_apply("year", Box::new(dates::Year{}));
 
         context
     }

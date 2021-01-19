@@ -131,7 +131,7 @@ impl RecursiveDescentParser {
         node.add_child(self.parse_expression()?);
 
         while self.next_token_is(",") {
-            self.tokens.pop_front();
+            self.next();
             node.add_child(self.parse_expression()?);
         }
 
@@ -421,9 +421,10 @@ impl RecursiveDescentParser {
 mod test {
     use crate::tokenizer::Tokenizer;
     use crate::parser::rdp::RecursiveDescentParser;
+    use crate::parser::ParserNodeType;
 
     #[test]
-    fn tokenize_basic_select() {
+    fn parse_basic_select() {
         let t = Tokenizer::new();
         let mut tokens = t.tokenize("SELECT a, b, c FROM table".to_string());
         let maybe_tree = RecursiveDescentParser::new(tokens).parse();
@@ -432,7 +433,31 @@ mod test {
             Err(_e) => assert!(false),
             Ok(tree) => assert!(tree.children.len() > 0)
         }
+    }
 
+    #[test]
+    fn parse_two_function_select() {
+        let t = Tokenizer::new();
+        let tokens = t.tokenize("select mean(teampoints), mean(assists) from nba_games_stats".to_string());
+        let maybe_tree = RecursiveDescentParser::new(tokens).parse();
+
+        match maybe_tree {
+            Err(_e) => assert!(false),
+            Ok(tree) => {
+                let (mut type_, mut tokens, mut nodes) = tree.release();
+
+                assert_eq!(type_, ParserNodeType::Query);
+
+                let columns = nodes.pop_front().unwrap();
+                let from = nodes.pop_front().unwrap();
+
+                let (type_, tokens, nodes) = columns.release();
+
+                assert_eq!(type_, ParserNodeType::Columns);
+
+
+            }
+        }
 
     }
 }

@@ -4,7 +4,7 @@ use crate::table::Column;
 use crate::result::ErrorType::{Syntax, Type};
 use chrono::{NaiveDateTime, Datelike};
 
-struct Year{}
+pub struct Year{}
 
 impl MapOp for Year {
     fn apply(&self, mut arguments: Vec<Column>) -> SqlResult<Column> {

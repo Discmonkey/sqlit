@@ -79,7 +79,7 @@ impl Tokenizer {
 
         let re = Regex::new(r#"(?xi)
             [\s]* #skip white spaces
-            (?P<keyword>SELECT|FROM|WHERE|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY|INTO|LIMIT|ASC|DESC|AS)
+            (?P<keyword>SELECT|FROM|WHERE|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY\s+|INTO\s+|LIMIT\s+|ASC\s+|DESC\s+|AS\s+)
             |
             (?P<operator>>=|<=|[-+/*><=]|or\s|and\s|!=)
             |
@@ -151,6 +151,18 @@ mod test {
 
 
         [Literal, Separator, Identifier, Separator, Identifier, Separator, Literal]
+            .into_iter().for_each(|type_| {
+            assert!(tokens.pop_front().unwrap().is_type(*type_));
+        });
+    }
+
+    #[test]
+    fn as_versus_assists() {
+        let t = Tokenizer::new();
+
+        let mut tokens = t.tokenize("SELECT year(date) as    y FROM nba_games_stats".to_string());
+
+        [Keyword, Identifier, Separator, Identifier, Separator, Keyword, Identifier, Keyword, Identifier]
             .into_iter().for_each(|type_| {
             assert!(tokens.pop_front().unwrap().is_type(*type_));
         });
