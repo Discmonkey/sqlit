@@ -1,10 +1,10 @@
 use clap::{App, Arg};
+use crate::ingest::{SepFinder, TsvFinder, SpacesFinder, CsvFinder};
 
-#[derive(Debug)]
 pub struct Config {
     pub table_paths: Vec<String>,
     pub parse_columns: bool,
-    pub separator: String,
+    pub separator: Box<dyn SepFinder>,
 }
 
 pub fn get() -> Config {
@@ -22,18 +22,30 @@ pub fn get() -> Config {
             .short('c')
             .long("columns"))
         .arg(Arg::new("tsv")
-            .about("separator file uses between columns")
+            .about("looks for a tab as the delimiter between columns")
             .short('t')
-            .long("tsv")).get_matches();
+            .long("tsv"))
+        .arg(Arg::new("spaces")
+            .about("look for two + spaces as the delimiter between columns")
+            .short('s')
+            .long("spaces")
+        .long("tsv")).get_matches();
 
     let table_paths: Vec<_> = matches.values_of("tables").unwrap().map(|s| s.to_string()).collect();
     let parse_columns = !(matches.occurrences_of("column_help") > 0);
-    let separator = if matches.occurrences_of("tsv") > 0 { "\t" } else {","}.to_string();
+    let separator = if matches.occurrences_of("tsv") > 0 {
+            Box::new(TsvFinder{}) as Box<dyn SepFinder>
+        } else if matches.occurrences_of("spaces") > 0 {
+            Box::new(SpacesFinder{}) as Box<dyn SepFinder>
+        } else {
+            Box::new(CsvFinder{}) as Box<dyn SepFinder>
+        };
+
 
     Config {
         table_paths,
         parse_columns,
-        separator
+        separator,
     }
 
 }

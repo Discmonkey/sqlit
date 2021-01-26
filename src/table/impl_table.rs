@@ -7,6 +7,7 @@ use crate::build_column::build_column;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Lookup, Runtime};
 use crate::table::{Table, Column, NamedColumn, TableMeta};
+use crate::ingest::{SepFinder, read_line};
 
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -30,7 +31,7 @@ impl Table {
         self.alias.clone()
     }
 
-    pub fn from_file(file_location: &str, separator: &str) -> Result<Self, std::io::Error> {
+    pub fn from_file(file_location: &str, separator: &Box<dyn SepFinder>) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
         let alias = extract_table_name(file_location)
@@ -46,10 +47,15 @@ impl Table {
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
+        let mut c = 0;
         for line in lines {
-            parse_line(line?, separator).into_iter().enumerate().for_each(|(num, s)| {
+            let tline = line?;
+            println!("{}", tline);
+            read_line(tline, separator).into_iter().enumerate().for_each(|(num, s)| {
                 raw_string_columns[num].push(s);
             });
+
+            c+= 1;
         }
 
         let columns = raw_string_columns.into_par_iter().map(
@@ -188,12 +194,9 @@ fn clean(raw: &str) -> String {
     s
 }
 
-fn parse_line(line: String, separator: &str) -> Vec<String> {
-    line.split(separator).map(clean).collect()
-}
 
-fn parse_header_line(header_line: String, separator: &str) -> Vec<String> {
-    parse_line(header_line, separator).into_iter().enumerate().map(|(num, s)| {
+fn parse_header_line(header_line: String, separator: &Box<dyn SepFinder>) -> Vec<String> {
+    read_line(header_line, separator).into_iter().enumerate().map(|(num, s)| {
         if s.len() == 0 {
             num.to_string()
         } else {
@@ -215,6 +218,7 @@ mod test {
 
     use crate::table;
     use crate::table::impl_table::clean;
+    use crate::ingest::{CsvFinder, SepFinder};
 
     #[test]
     fn test_string_clean() {
@@ -233,7 +237,7 @@ mod test {
     fn build_table() {
         time_test!();
 
-        let parsed_table = table::Table::from_file("test/nba.games.stats.csv", ",");
+        let parsed_table = table::Table::from_file("test/data.csv", &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
 
         match parsed_table {
             Ok(t) => assert!(t.len() > 0),

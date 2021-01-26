@@ -8,10 +8,13 @@ mod result;
 mod table;
 mod tokenizer;
 mod linefeed_io;
+mod ingest;
+
 use linefeed;
 use crate::parser::rdp::RecursiveDescentParser;
 use std::sync::Arc;
 use crate::linefeed_io::TableCompleter;
+use crate::ingest::CsvFinder;
 
 fn main() -> std::io::Result<()> {
 
@@ -22,7 +25,7 @@ fn main() -> std::io::Result<()> {
     let toke = tokenizer::Tokenizer::new();
 
     // loading tables
-    let mut table_store = table::Store::from_paths(args.table_paths, args.separator.as_str())?;
+    let mut table_store = table::Store::from_paths(args.table_paths, &args.separator)?;
 
     // setting up io interface
     let io = linefeed::Interface::new("sqlit")?;

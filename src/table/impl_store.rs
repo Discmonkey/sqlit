@@ -3,10 +3,11 @@ use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
 use crate::result::ErrorType::{Lookup};
 use std::io;
+use crate::ingest::SepFinder;
 
 impl Store {
 
-    pub fn from_paths(csv_paths: Vec<String>, separator: &str) -> io::Result<Self> {
+    pub fn from_paths(csv_paths: Vec<String>, separator: &Box<dyn SepFinder>) -> io::Result<Self> {
 
         csv_paths.into_iter().map(|path| {
             Table::from_file(path.as_str(), separator).map(|t| {
@@ -29,10 +30,11 @@ impl Store {
 mod test {
     use crate::table::Store;
     use crate::result::SqlResult;
+    use crate::ingest::{CsvFinder, SepFinder};
 
     #[test]
     fn test_get() -> std::io::Result<()>{
-        let mut s = Store::from_paths(vec!["test/nba.games.stats.csv".to_string()], ",")?;
+        let mut s = Store::from_paths(vec!["test/nba.games.stats.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>))?;
 
 
         match s.get("nba_games_stats") {
