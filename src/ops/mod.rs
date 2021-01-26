@@ -4,6 +4,7 @@ mod binary_ops;
 mod math;
 mod boolean;
 mod dates;
+mod general;
 
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;
@@ -54,6 +55,7 @@ impl OpContext {
         context.set_apply("<=", Box::new(LessOrEqual{}));
 
         context.set_apply("year", Box::new(dates::Year{}));
+        context.set_reduce("count", Box::new(general::Count{}));
 
         context
     }

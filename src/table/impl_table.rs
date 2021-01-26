@@ -47,15 +47,19 @@ impl Table {
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
 
-        let mut c = 0;
+        let mut line_counter = 0;
         for line in lines {
-            let tline = line?;
-            println!("{}", tline);
-            read_line(tline, separator).into_iter().enumerate().for_each(|(num, s)| {
-                raw_string_columns[num].push(s);
-            });
+            let parsed = read_line(line?, separator);
 
-            c+= 1;
+            if parsed.len() < column_names.len() {
+                println!("Parse Error: Line {}: {}", line_counter, parsed.join(","))
+            } else {
+                parsed.into_iter().enumerate().for_each(|(num, s)| {
+                    raw_string_columns[num].push(s);
+                });
+            }
+
+            line_counter += 1;
         }
 
         let columns = raw_string_columns.into_par_iter().map(

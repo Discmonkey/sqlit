@@ -27,6 +27,7 @@ fn select<T: Clone>(values: &Vec<T>, selections: &Vec<bool>) -> Vec<T> {
 
 fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
     let mut new_vec: Vec<T> = Vec::new();
+
     new_vec.resize(values.len(), values[0].clone());
 
     order.iter().enumerate().for_each(|(num, assignment)| {

@@ -124,7 +124,7 @@ pub fn read_field(chars: &Vec<char>, mut index: Index, length: Index, separator_
     while index < length && !separator_reader.at_sep(chars, index, length) {
         match chars[index] {
             // on opening quotes we don't need to check the separator until the next opening/closing character
-            '"' | '\'' => {
+            '"' => {
                 let c = chars[index];
                 index += 1;
                 // read until we find the next instance of this character
@@ -162,7 +162,7 @@ fn read_until(character: char,
 #[cfg(test)]
 mod test {
     use std::collections::VecDeque;
-    use crate::ingest::{CsvFinder, read_line, SepFinder};
+    use crate::ingest::{CsvFinder, read_line, SepFinder, read_field};
 
     #[test]
     fn test_line_read() {
@@ -179,34 +179,25 @@ mod test {
         });
     }
 
-    #[test]
-    fn test_dynamic_pass() {
-        let line = "this,is,a,4,'csv'";
-
-        let parts = read_line(line.to_string(), &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
-
-        parts.into_iter().zip(vec!["this", "is", "a", "4", "'csv'"].into_iter()).for_each(|(l, r)| {
-            assert_eq!(l, r);
-        });
-    }
 
     #[test]
     fn tough_csv() {
         let header = "valence,year,acousticness,artists,danceability,duration_ms,energy,explicit,id,instrumentalness,key,liveness,loudness,mode,name,popularity,release_date,speechiness,tempo";
         let l1 = "0.0594,1921,0.982,\"['Sergei Rachmaninoff', 'James Levine', 'Berliner Philharmoniker']\",0.279,831667,0.211,0,4BJqT0PrAfrxzMOxytFOIz,0.878,10,0.665,-20.096,1,\"Piano Concerto No. 3 in D Minor, Op. 30: III. Finale. Alla breve\",4,1921,0.0366,80.954";
         let l2 = "0.963,1921,0.732,['Dennis Day'],0.8190000000000001,180533,0.341,0,7xPhfUan2yNtyFG0cUWkt8,0.0,7,0.16,-12.441,1,Clancy Lowered the Boom,5,1921,0.415,60.93600000000001";
+        let l3 = "0.826,1921,0.995,['Maurice Chevalier'],0.463,147133,0.26,0,0BMkRpQtDoKjcgzCpnqLNa,0.0,9,0.258,-16.894000000000002,1,Dans La Vie Faut Pas S'en Faire,0,1921,0.0557,85.146";
 
         let sep = Box::new(CsvFinder{}) as Box<dyn SepFinder>;
 
         let length_header = read_line(header.to_string(), &sep).len();
 
         let l1_header = read_line(l1.to_string(), &sep);
-
         let l2_header = read_line(l2.to_string(), &sep);
+        let l3_header = read_line(l3.to_string(), &sep);
 
         assert_eq!(length_header, l1_header.len());
-        assert_eq!(length_header, l2_header.len())
-
+        assert_eq!(length_header, l2_header.len());
+        assert_eq!(length_header, l3_header.len());
     }
 
 }

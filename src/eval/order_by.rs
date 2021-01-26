@@ -11,6 +11,7 @@ struct Order<'a> {
 }
 
 pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> SqlResult<Table>{
+
     match maybe_order_by {
         Some(order_by) => {
             let (_, _, clauses) = order_by.release();
@@ -63,4 +64,40 @@ fn parse_into_order(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult<Vec
         })
 
     }).collect::<SqlResult<Vec<Order>>>()
+}
+
+#[cfg(test)]
+mod test {
+    use crate::table::Table;
+    use crate::ingest::{CsvFinder, SepFinder};
+    use crate::parser::ParserNode;
+    use crate::tokenizer::Tokenizer;
+    use crate::parser::rdp::RecursiveDescentParser;
+    use crate::result::{SqlError, SqlResult};
+    use crate::result::ErrorType::Runtime;
+    use crate::{eval, ops, table};
+
+    #[test]
+    fn test_danceability() -> SqlResult<()>{
+
+        let mut table_store = table::Store::from_paths(vec!["test/data.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>))
+            .map_err(|_| SqlError::new("", Runtime))?;
+
+        let c = table_store.get("data").unwrap().clone();
+
+        let columns = c.into_columns();
+
+        columns.into_iter().for_each(|c| {
+            println!("{} - {}", c.name, c.column.len());
+        });
+
+        // let t = Tokenizer::new();
+        // let tokens= t.tokenize("select name, danceability from data order by danceability".to_string());
+        // let parsed = RecursiveDescentParser::new(tokens).parse()?;
+        // let mut ops = ops::OpContext::new();
+        //
+        // let _ = eval::eval(parsed, &mut ops, &mut table_store)?;
+
+        Ok(())
+    }
 }
