@@ -1,4 +1,4 @@
-use crate::ops::{MapOp, ReduceOp};
+use crate::ops::{ReduceOp};
 use crate::result::SqlResult;
 use crate::table::Column;
 

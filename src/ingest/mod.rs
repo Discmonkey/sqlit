@@ -174,7 +174,7 @@ mod test {
 
         let parts = read_line(line.to_string(), &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
 
-        parts.into_iter().zip(vec!["this", "is", "a", "4", "csv"].into_iter()).for_each(|(l, r)| {
+        parts.into_iter().zip(vec!["this", "is", "a", "4", "'csv'"].into_iter()).for_each(|(l, r)| {
             assert_eq!(l, r);
         });
     }
