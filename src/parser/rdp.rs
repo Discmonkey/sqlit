@@ -132,8 +132,21 @@ impl RecursiveDescentParser {
 
         while self.next_token_is(",") {
             self.next();
-            node.add_child(self.parse_expression()?);
+
+            if self.next_token_is("*") {
+                node.add_child(self.parse_star()?);
+            } else {
+                node.add_child(self.parse_expression()?);
+            }
         }
+
+        Ok(node)
+    }
+
+    fn parse_star(&mut self) -> ParserResult {
+        let mut node = ParserNode::new(ParserNodeType::StarOperator);
+
+        self.get_required_token_by_value("*")?;
 
         Ok(node)
     }

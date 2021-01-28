@@ -26,6 +26,7 @@ pub enum ParserNodeType {
     OrderByStatement,
     Into,
     Limit,
+    StarOperator,
 }
 
 #[derive(Clone)]
