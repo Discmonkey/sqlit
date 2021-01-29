@@ -5,6 +5,7 @@ mod math;
 mod boolean;
 mod dates;
 mod general;
+mod null_ops;
 
 use crate::result::{SqlResult, SqlError};
 use std::collections::HashMap;

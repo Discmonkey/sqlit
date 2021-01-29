@@ -143,7 +143,7 @@ mod test {
 
     #[test]
     fn test_order() {
-        let c = Column::Ints(vec![1, 2, 3, 4]);
+        let c = Column::Ints(vec![1, 2, 3, 4].into_iter().map(Some).collect());
         let order = vec![3, 2, 1, 0];
 
         let new = c.order(&order);
@@ -151,7 +151,7 @@ mod test {
         match new {
             Column::Ints(mut i) => {
                 i.into_iter().zip((1..=4).rev()).for_each(|(a, b)| {
-                    assert_eq!(a, b);
+                    assert_eq!(a, Some(b));
                 })
             },
             _ => assert!(false)

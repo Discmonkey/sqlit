@@ -128,32 +128,32 @@ mod test {
 
     #[test]
     fn test_binary_iterate() {
-        let mut left = vec![1, 2, 3];
-        let mut right = vec![1, 2, 3];
+        let mut left = vec![Some(1), Some(2), Some(3)];
+        let mut right = vec![Some(1), Some(2), Some(3)];
         let mut t = MapType::LL;
-        let mut output : Vec<usize> = binary_iterate!(left, right, t, |(a, b)| {a + b});
+        let mut output : Vec<Option<usize>> = binary_iterate!(left, right, t, |(a, b)| {a + b});
 
-        for (i, num) in vec![2, 4, 6].into_iter().enumerate() {
+        for (i, num) in vec![2, 4, 6].into_iter().map(Some).enumerate() {
             assert_eq!(num, output[i]);
         }
 
-        left = vec![1];
-        right = vec![1, 2, 3];
+        left = vec![Some(1)];
+        right = vec![Some(1), Some(2), Some(3)];
         t = MapType::SL;
 
-        let output : Vec<usize> = binary_iterate!(left, right, t, |(a, b)| {a + b});
+        let output : Vec<Option<usize>> = binary_iterate!(left, right, t, |(a, b)| {a + b});
 
-        for (i, num) in vec![2, 3, 4].into_iter().enumerate() {
+        for (i, num) in vec![2, 3, 4].into_iter().map(Some).enumerate() {
             assert_eq!(num, output[i]);
         }
 
-        let left = vec![1, 2, 3];
-        let right = vec![1];
+        let left = vec![Some(1), Some(2), Some(3)];
+        let right = vec![Some(1)];
         let t = MapType::LS;
 
-        let output : Vec<usize> = binary_iterate!(left, right, t, |(a, b)| {a + b});
+        let output : Vec<Option<usize>> = binary_iterate!(left, right, t, |(a, b)| {a + b});
 
-        for (i, num) in vec![2, 3, 4].into_iter().enumerate() {
+        for (i, num) in vec![2, 3, 4].into_iter().map(Some).enumerate() {
             assert_eq!(num, output[i]);
         }
     }

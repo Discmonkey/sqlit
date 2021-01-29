@@ -1,5 +1,6 @@
 use std::fmt;
 use std::error::Error;
+use crate::result::ErrorType::Runtime;
 
 
 #[derive(Debug, Clone)]
@@ -20,6 +21,16 @@ impl SqlError {
     pub fn new(message: &str, error_type: ErrorType) -> Self {
         SqlError {
             type_: error_type, message: message.to_string()
+        }
+    }
+
+    pub fn args_length_error(num_args_expected: usize,
+                             num_args_received: usize, function_name: &str) -> Self {
+        let message = format!("{} expects {} but received {}", function_name, num_args_expected, num_args_received);
+
+        SqlError {
+            type_: Runtime,
+            message
         }
     }
 }
