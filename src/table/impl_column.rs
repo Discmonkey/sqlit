@@ -132,9 +132,10 @@ impl Column {
             Column::Dates(v1) => other!(v1, Dates, other),
         };
 
-
         Ok(())
     }
+
+
 }
 
 #[cfg(test)]

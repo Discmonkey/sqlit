@@ -1,18 +1,30 @@
 #[macro_use]
 mod binary_ops;
 
+use crate::result::{SqlResult, SqlError};
+
+#[macro_use]
+macro_rules! arg_check {
+    ($expected:expr, $got:expr, $name:expr) => {
+        if $expected != $got.len() {
+            return Err(SqlError::args_length_error($expected, $got.len(), $name));
+        }
+    }
+}
+
 mod math;
 mod boolean;
 mod dates;
 mod general;
 mod null_ops;
 
-use crate::result::{SqlResult, SqlError};
+
 use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::{Lookup, Runtime};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
+
 pub trait MapOp {
     fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
 }
