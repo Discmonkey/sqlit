@@ -70,6 +70,9 @@ impl OpContext {
         context.set_apply("year", Box::new(dates::Year{}));
         context.set_reduce("count", Box::new(general::Count{}));
 
+        context.set_apply("is_null", Box::new(null_ops::IsNull{}));
+        context.set_apply("not_null", Box::new(null_ops::NotNull{}));
+
         context
     }
 
