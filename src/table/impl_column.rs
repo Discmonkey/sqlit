@@ -4,8 +4,8 @@ use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::Runtime;
 
 macro_rules! apply {
-    ($self: expr, $method: tt, $($arg:expr),*) => {
-        match $self {
+    ($column: expr, $method: tt, $($arg:expr),*) => {
+        match $column {
             Column::Booleans(b) => b.$method($($arg,)*),
             Column::Dates(d) => d.$method($($arg,)*),
             Column::Floats(f) => f.$method($($arg,)*),
@@ -14,6 +14,7 @@ macro_rules! apply {
         }
     }
 }
+
 
 
 fn select<T: Clone>(values: &Vec<T>, selections: &Vec<Option<bool>>) -> Vec<T> {
@@ -25,8 +26,6 @@ fn select<T: Clone>(values: &Vec<T>, selections: &Vec<Option<bool>>) -> Vec<T> {
         }
     }).collect()
 }
-
-
 
 fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
     let mut new_vec: Vec<T> = Vec::new();
@@ -134,8 +133,6 @@ impl Column {
 
         Ok(())
     }
-
-
 }
 
 #[cfg(test)]

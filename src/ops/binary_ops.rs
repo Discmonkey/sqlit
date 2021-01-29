@@ -34,7 +34,6 @@ pub (super) fn prepare_binary_args(mut input: Vec<Column>) -> SqlResult<Annotate
     }
 }
 
-#[macro_export]
 macro_rules! binary_lift {
     ($input: ident, |($a:ident, $b:ident)| $block:block) => {
         if let (Some($a), Some($b)) = $input {
@@ -45,7 +44,6 @@ macro_rules! binary_lift {
     }
 }
 
-#[macro_export]
 macro_rules! binary_iterate {
     ($l:expr, $r:expr, $sizes:expr, |($a:ident, $b:ident)| $block:block) => {
         {
