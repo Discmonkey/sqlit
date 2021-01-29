@@ -83,7 +83,7 @@ impl Tokenizer {
             |
             (?P<operator>>=|<=|[-+/*><=]|or\s|and\s|!=)
             |
-            (?P<literal>'.+'|[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?|[0-9]+|true|false|null)
+            (?P<literal>'.+'|[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?|[0-9]+|true\s|false\s|null\s)
             |
             (?P<identifier>[a-zA-z][_a-zA-Z1-9]*)
             |
