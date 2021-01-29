@@ -4,14 +4,18 @@ use crate::result::{SqlResult, SqlError};
 use crate::table::{Table, NamedColumn};
 use crate::result::ErrorType::{Runtime, Syntax};
 use std::collections::VecDeque;
-use crate::tokenizer::Token;
+use crate::tokenizer::{Token, TokenType};
 use crate::build_column::build_column;
+use crate::parser::ParserNodeType::{StarOperator, Identifier};
+use crate::parser::rdp::RecursiveDescentParser;
 
 
 pub (super) fn eval(node: Option<ParserNode>, op_context: &mut OpContext, table: &Table) -> SqlResult<Table> {
     let columns_root = node.ok_or(SqlError::new("no columns provided", Runtime))?;
 
-    let (_, _, children) = columns_root.release();
+    let (_, _, mut children) = columns_root.release();
+
+    children = expand_star_operator(children, table)?;
 
     let mut columns = children.into_iter().map(|node| {
         eval_expression(node, op_context, table)
@@ -26,6 +30,26 @@ pub (super) fn eval(node: Option<ParserNode>, op_context: &mut OpContext, table:
     Ok(table)
 }
 
+fn expand_star_operator(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult<VecDeque<ParserNode>> {
+    let mut expanded_nodes = VecDeque::new();
+
+    for n in nodes.into_iter() {
+        if n.get_type() == &StarOperator {
+
+            for (name, _) in table.meta().columns.into_iter() {
+                let mut tokens = VecDeque::new();
+                tokens.push_back(Token::new(name, TokenType::Identifier));
+
+                expanded_nodes.push_back(RecursiveDescentParser::new(tokens).parse_expression()?);
+            }
+
+        } else {
+            expanded_nodes.push_back(n);
+        }
+    }
+
+    Ok(expanded_nodes)
+}
 
 pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, table: &Table) -> SqlResult<NamedColumn> {
     let (_, _, mut children) = node.release();

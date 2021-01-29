@@ -128,15 +128,18 @@ impl RecursiveDescentParser {
     fn parse_columns(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Columns);
 
-        node.add_child(self.parse_expression()?);
 
-        while self.next_token_is(",") {
-            self.next();
-
+        loop {
             if self.next_token_is("*") {
                 node.add_child(self.parse_star()?);
             } else {
                 node.add_child(self.parse_expression()?);
+            }
+
+            if self.next_token_is(",") {
+                self.next();
+            } else {
+                break;
             }
         }
 
@@ -146,13 +149,13 @@ impl RecursiveDescentParser {
     fn parse_star(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::StarOperator);
 
-        self.get_required_token_by_value("*")?;
+        self.get_required_token_by_value("*", "star operator expected")?;
 
         Ok(node)
     }
 
-    // expression is used for readability but does not actually produce a node, making the walk a bit easier
-    fn parse_expression(&mut self) -> ParserResult {
+    /// parses an expression may be called to expand *
+    pub fn parse_expression(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Expression);
 
         node.add_child(self.parse_equality()?);
@@ -498,9 +501,17 @@ mod test {
         }
 
     }
+
+
+    #[test]
+    fn test_star_operator() {
+        let t = Tokenizer::new();
+        let query = "select * from data";
+
+        let parsed = RecursiveDescentParser::new(t.tokenize(query.to_string())).parse();
+
+        assert!(parsed.is_ok());
+    }
 }
-
-
-
 
 
