@@ -31,7 +31,7 @@ impl Table {
         self.alias.clone()
     }
 
-    pub fn from_file(file_location: &str, separator: &Box<dyn SepFinder>) -> Result<Self, std::io::Error> {
+    pub fn from_file(file_location: &str, separator: &Box<dyn SepFinder>, null: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
         let alias = extract_table_name(file_location)
@@ -63,7 +63,7 @@ impl Table {
         }
 
         let columns = raw_string_columns.into_par_iter().map(|s| {
-            build_column(s, "null")
+            build_column(s, null)
         }).collect();
 
         Ok(Table {
@@ -241,7 +241,7 @@ mod test {
     fn build_table() {
         time_test!();
 
-        let parsed_table = table::Table::from_file("test/data.csv", &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
+        let parsed_table = table::Table::from_file("test/data.csv", &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null");
 
         match parsed_table {
             Ok(t) => assert!(t.len() > 0),

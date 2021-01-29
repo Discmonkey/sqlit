@@ -5,6 +5,7 @@ pub struct Config {
     pub table_paths: Vec<String>,
     pub parse_columns: bool,
     pub separator: Box<dyn SepFinder>,
+    pub null_representation: String,
 }
 
 pub fn get() -> Config {
@@ -29,7 +30,13 @@ pub fn get() -> Config {
             .about("look for two + spaces as the delimiter between columns")
             .short('s')
             .long("spaces")
-        .long("tsv")).get_matches();
+            .long("tsv"))
+        .arg(Arg::new("null_representation")
+            .about("what the null representation is in the file")
+            .short('n')
+            .long("null")
+            .default_value("null"))
+        .get_matches();
 
     let table_paths: Vec<_> = matches.values_of("tables").unwrap().map(|s| s.to_string()).collect();
     let parse_columns = !(matches.occurrences_of("column_help") > 0);
@@ -41,11 +48,13 @@ pub fn get() -> Config {
             Box::new(CsvFinder{}) as Box<dyn SepFinder>
         };
 
+    let null_representation = matches.value_of("null_representation").unwrap().to_string();
 
     Config {
         table_paths,
         parse_columns,
         separator,
+        null_representation
     }
 
 }

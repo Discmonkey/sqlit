@@ -78,7 +78,7 @@ mod test {
     #[test]
     fn test_danceability() -> SqlResult<()>{
 
-        let mut table_store = table::Store::from_paths(vec!["test/data.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>))
+        let mut table_store = table::Store::from_paths(vec!["test/data.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null")
             .map_err(|_| SqlError::new("", Runtime))?;
 
         let t = Tokenizer::new();
