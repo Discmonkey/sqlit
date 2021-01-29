@@ -15,15 +15,18 @@ macro_rules! apply {
     }
 }
 
-fn select<T: Clone>(values: &Vec<T>, selections: &Vec<bool>) -> Vec<T> {
+
+fn select<T: Clone>(values: &Vec<T>, selections: &Vec<Option<bool>>) -> Vec<T> {
     values.into_iter().zip(selections.iter()).filter_map(|(val, s)| {
-        if *s {
+        if let Some(true) = s {
             Some(val.clone())
         } else {
             None
         }
     }).collect()
 }
+
+
 
 fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
     let mut new_vec: Vec<T> = Vec::new();
@@ -50,7 +53,7 @@ impl Column {
     }
 
 
-    pub fn select(&self, selections: &Vec<bool>) -> Self {
+    pub fn select(&self, selections: &Vec<Option<bool>>) -> Self {
         match self {
             Column::Booleans(v) => Column::Booleans(select(v, selections)),
             Column::Ints(v) => Column::Ints(select(v, selections)),
@@ -87,13 +90,18 @@ impl Column {
 
         match self {
             Column::Booleans(b) => {
-                if b[i1] == b[i2] {
-                    Ordering::Equal
-                } else if b[i1] {
-                    Ordering::Less
+                if let (Some(b1), Some(b2)) = (b[i1], b[i2]) {
+                    if b1 == b2 {
+                        Ordering::Equal
+                    } else if b1 {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    }
                 } else {
-                    Ordering::Greater
+                    Ordering::Equal
                 }
+
             },
 
             Column::Ints(i) => i[i1].cmp(&i[i2]),
@@ -148,6 +156,5 @@ mod test {
             },
             _ => assert!(false)
         }
-
     }
 }

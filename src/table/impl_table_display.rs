@@ -12,49 +12,66 @@ fn item_width(dest: &mut Vec<u8>, writable: &dyn Display) -> std::io::Result<usi
     Ok(dest.len())
 }
 
-fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
-    let mut dest = Vec::new();
-    let mut max_length = item_width(&mut dest, name)?;
+macro_rules! maybe_length {
+    ($item:ident, $length: ident, $dest: ident) => {
+        if let Some(unwrapped) = $item {
+            max(item_width(&mut $dest, unwrapped)?, $length)
+        } else {
+            max(4, $length)
+        }
+    }
+}
 
-    match col {
+const NULL_PRINT_VALUE: &String = &"NULL".to_string();
+
+fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
+    let mut scratch = Vec::new();
+    let name_print_width = item_width(&mut dest, name)?;
+
+    macro_rules! find_max {
+        ($vector: ident, |$value: ident| $block:block) => {
+            $vector.iter().map(|maybe_value| {
+                maybe_value.map(|$value| {
+                    item_width(&mut scratch, &$block).unwrap_or(0)
+                }).unwrap_or(0)
+            }).max().unwrap_or(0);
+        }
+    }
+    let max_width_column = match col {
         Column::Strings(s) => {
-            for string in s.iter() {
-                max_length = max(item_width(&mut dest, string)?, max_length);
-            }
+            find_max!(s, |string| {string})
         },
 
         Column::Ints(i) => {
-            for int in i.iter() {
-                max_length = max(item_width(&mut dest, int)?, max_length);
-            }
+            find_max!(i, |int| {int})
         },
 
         Column::Floats(f) => {
-            for float in f.iter() {
-                max_length = max(item_width(&mut dest, float)?, max_length);
-            }
+            find_max!(f, |float| {float|})
         },
 
         Column::Dates(d) => {
-            for timestamp in d.iter() {
-                max_length = max(item_width(&mut dest, &NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string())?, max_length);
-            }
+            find_max!(d, |timestamp| {
+                NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string()
+            })
         },
 
         Column::Booleans(_) => {
-            // max(len("false"), len("true")) == 5
-            max_length = max(max_length, 5);
+            5
         }
-    }
+    };
 
     // add two spaces of padding
     // may be worth making configurable
-    Ok(max_length + 2)
+    Ok(max(name_print_width, max_width_column) + 2)
 
 }
 
 fn write_entry(f: &mut std::fmt::Formatter, lengths: &Vec<usize>,
-               col: usize, writable: &dyn Display, scratch: &mut Vec<u8>) -> std::fmt::Result {
+               col: usize, maybe_writable: Option<&dyn Display>, scratch: &mut Vec<u8>) -> std::fmt::Result {
+
+    let writable = maybe_writable.unwrap_or(NULL_PRINT_VALUE as &dyn Display);
+
     let mut write_width = item_width(scratch, writable).map_err(|_| std::fmt::Error::default())?;
 
     write!(f, "{}", writable)?;
@@ -79,7 +96,7 @@ impl std::fmt::Display for Table {
         let mut scratch = Vec::new();
 
         for (num, name) in self.column_names.iter().enumerate() {
-            write_entry(f, &column_print_widths, num, name, &mut scratch)?;
+            write_entry(f, &column_print_widths, num, Some(name), &mut scratch)?;
         }
 
         writeln!(f)?;
@@ -91,12 +108,40 @@ impl std::fmt::Display for Table {
                     index = col.len() - 1;
                 }
 
+                macro_rules! as_display {
+                    ($expr: expr) => {
+                       $expr.map(|v| &v as (&dyn std::fmt::Display))
+                    }
+                }
+
                 match col {
-                    Column::Strings(s) => write_entry(f, &column_print_widths, num, &s[index], &mut scratch)?,
-                    Column::Ints(i) => write_entry(f, &column_print_widths, num, &i[index], &mut scratch)?,
-                    Column::Floats(floats) => write_entry(f, &column_print_widths, num, &floats[index], &mut scratch)?,
-                    Column::Dates(d) => write_entry(f,  &column_print_widths, num, &NaiveDateTime::from_timestamp(d[index].clone(), 0).to_string(), &mut scratch)?,
-                    Column::Booleans(b) => write_entry(f, &column_print_widths, num, &b[index], &mut scratch)?,
+                    Column::Strings(s) => write_entry(f,
+                                                      &column_print_widths,
+                                                      num, as_display!(s[index]),
+                                                      &mut scratch)?,
+
+                    Column::Ints(i) => write_entry(f,
+                                                   &column_print_widths,
+                                                   num,
+                                                   as_display!(i[index]),
+                                                   &mut scratch)?,
+
+                    Column::Floats(floats) => write_entry(f,
+                                                          &column_print_widths,
+                                                          num,
+                                                          as_display!(floats[index]),
+                                                          &mut scratch)?,
+
+                    Column::Dates(d) => write_entry(f,
+                                                    &column_print_widths,
+                                                    num,
+                                                    as_display!(d[index].map(|t| NaiveDateTime::from_timestamp(t.clone(), 0).to_string())),
+                                                    &mut scratch)?,
+
+                    Column::Booleans(b) => write_entry(f,
+                                                       &column_print_widths,
+                                                       num, as_display!(b[index]),
+                                                       &mut scratch)?,
                 }
             }
 

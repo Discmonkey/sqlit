@@ -168,7 +168,7 @@ impl Table {
         }
     }
 
-    pub fn where_(&self, mask: Vec<bool>) -> Self {
+    pub fn where_(&self, mask: Vec<Option<bool>>) -> Self {
         let columns: Vec<Column> = self.columns.iter().map(|c| {
             c.select(&mask)
         }).collect();

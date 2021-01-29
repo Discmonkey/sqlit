@@ -200,7 +200,8 @@ fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
     let (_, tokens, _) = node.release();
 
     Ok(NamedColumn {
-        column: build_column(tokens.iter().map(|t| t.get_text().clone()).collect()),
+        column: build_column(tokens.iter().map(|t| t.get_text().clone()).collect(), "nan"),
         name: "".to_string(),
     })
 }
+

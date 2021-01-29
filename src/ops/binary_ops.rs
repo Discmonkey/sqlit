@@ -42,11 +42,33 @@ macro_rules! binary_iterate {
             let r = $r.into_iter();
 
             (if $sizes == MapType::SL {
-                l.cycle().zip(r).map(|($a, $b)| $block).collect()
+                l.cycle().zip(r).map(
+                    |t| {
+                        if let (Some($a), Some($b)) = t {
+                            Some($block)
+                        } else {
+                            None
+                        }
+                    }
+                ).collect()
             } else if $sizes == MapType::LS {
-                l.zip(r.cycle()).map(|($a, $b)| $block).collect()
+                l.zip(r.cycle()).map(
+                    |t| {
+                        if let (Some($a), Some($b)) = t {
+                            Some($block)
+                        } else {
+                            None
+                        }
+                    }).collect()
             } else {
-                l.zip(r).map(|($a, $b)| $block).collect()
+                l.zip(r).map(
+                    |t| {
+                        if let (Some($a), Some($b)) = t {
+                            Some($block)
+                        } else {
+                            None
+                        }
+                    }).collect()
             })
         }
     }

@@ -11,7 +11,7 @@ impl Table {
             match column {
                 Column::Booleans(v) => v[idx].hash(&mut hasher),
                 Column::Ints(v) => v[idx].hash(&mut hasher),
-                Column::Floats(v) => ((v[idx] * 1e6).round() as i64).hash(&mut hasher),
+                Column::Floats(v) => (v[idx].map(|i| (i * 1e6).round() as i64)).hash(&mut hasher),
                 Column::Strings(v) => v[idx].hash(&mut hasher),
                 Column::Dates(v) => v[idx].hash(&mut hasher),
             }

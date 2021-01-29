@@ -10,7 +10,7 @@ fn result_to_option<T, E>(result: Result<T, E>) -> Option<T> {
 
 pub trait Converter<T> {
     fn convert(&mut self, field: &str) -> Option<T>;
-    fn make_column(&self, values: Vec<T>) ->  Column;
+    fn make_column(&self, values: Vec<Option<T>>) ->  Column;
 }
 
 pub struct ToString {}
@@ -20,7 +20,7 @@ impl Converter<String> for ToString {
         Some(field.to_owned())
     }
 
-    fn make_column(&self, values: Vec<String>) -> Column {
+    fn make_column(&self, values: Vec<Option<String>>) -> Column {
         Column::Strings(values)
     }
 }
@@ -36,7 +36,7 @@ macro_rules! make_default_converter {
                 result_to_option(field.parse::<$type>())
             }
 
-            fn make_column(&self, values: Vec<$type>) -> Column {
+            fn make_column(&self, values: Vec<Option<$type>>) -> Column {
                 Column::$enum(values)
             }
         }
@@ -96,7 +96,7 @@ impl Converter<Timestamp> for ToDate {
         }
     }
 
-    fn make_column(&self, values: Vec<i64>) -> Column {
+    fn make_column(&self, values: Vec<Option<i64>>) -> Column {
         Column::Dates(values)
     }
 }

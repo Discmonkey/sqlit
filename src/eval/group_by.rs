@@ -37,7 +37,7 @@ pub (super) fn eval(maybe_group_by_node: Option<ParserNode>,
             Ok(Either::Group(Grouped {
                 groups: key_tables.into_iter().enumerate().map(|(num, mut key_table)| {
                     let selector = assignments.iter().map(|assignment| {
-                        assignment == &num
+                        Some(assignment == &num)
                     }).collect();
 
                     let selected_rows = table.where_(selector);
@@ -50,6 +50,7 @@ pub (super) fn eval(maybe_group_by_node: Option<ParserNode>,
                     }
 
                     key_table
+
                     }).collect()
                 })
             )
@@ -79,8 +80,8 @@ fn keys_to_assignments(grouped_by_keys: &Table) -> (Vec<usize>, Vec<Table>) {
 
     // grab one row per group
     let tables = representative_rows.into_iter().map(|i| {
-        let mut selector = vec![false; grouped_by_keys.len()];
-        selector[i] = true;
+        let mut selector = vec![Some(false); grouped_by_keys.len()];
+        selector[i] = Some(true);
 
         grouped_by_keys.where_(selector)
     }).collect();
