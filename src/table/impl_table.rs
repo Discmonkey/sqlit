@@ -62,9 +62,9 @@ impl Table {
             line_counter += 1;
         }
 
-        let columns = raw_string_columns.into_par_iter().map(
-            build_column
-        ).collect();
+        let columns = raw_string_columns.into_par_iter().map(|s| {
+            build_column(s, "null")
+        }).collect();
 
         Ok(Table {
             alias, column_map, column_names, columns

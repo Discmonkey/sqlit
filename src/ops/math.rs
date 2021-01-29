@@ -66,6 +66,11 @@ map_op_impl!(Add, +);
 map_op_impl!(Subtract, -);
 map_op_impl!(Divide, /);
 
+macro_rules! vec_wrap {
+    ($expr: expr) => {
+        vec![Some($expr)]
+    }
+}
 macro_rules! numeric_reduce_impl {
     ($target_struct:ident, $op_int:tt, $op_float:tt) => {
         impl ReduceOp for $target_struct {
@@ -75,8 +80,8 @@ macro_rules! numeric_reduce_impl {
                     Err(SqlError::new("cannot reduce an empty column", Runtime))
                 } else {
                     match argument {
-                        Column::Ints(i) => Ok(Column::Ints(vec![i.into_iter().$op_int().unwrap()])),
-                        Column::Floats(f) => Ok(Column::Floats(vec![f.into_iter().$op_float()])),
+                        Column::Ints(i) => Ok(Column::Ints(vec_wrap!(i.into_iter().filter_map(|v| v).$op_int().unwrap()))),
+                        Column::Floats(f) => Ok(Column::Floats(vec_wrap!(f.into_iter().filter_map(|v| v).$op_float()))),
                         _ => Err(SqlError::new("max function reduces only over ints and floats", Type))
                     }
                 }
@@ -103,8 +108,7 @@ impl ReduceOp for Mean {
         match argument {
             Column::Floats(f) => {
                 Ok(Column::Floats(
-                    vec![
-                        f.into_iter().enumerate().fold(0.0, |rolling_mean, (counter, next)| {
+                    vec_wrap!(f.into_iter().filter_map(|v| v).enumerate().fold(0.0, |rolling_mean, (counter, next)| {
                             let c = counter as f64;
 
                             if counter > 0 {
@@ -112,12 +116,16 @@ impl ReduceOp for Mean {
                             } else {
                                 next
                             }
-                        })]))
+                        }))
+                    ))
             }
 
             Column::Ints(i) => Ok(Column::Floats(
-                    vec![
-                        i.into_iter().enumerate().fold(0.0, |rolling_mean, (counter, next)| {
+                    vec_wrap!(i.into_iter()
+                            .filter_map(|f| {
+                                f
+                            })
+                            .enumerate().fold(0.0, |rolling_mean, (counter, next)| {
                             let c = counter as f64;
 
                             if counter > 0 {
@@ -125,7 +133,8 @@ impl ReduceOp for Mean {
                             } else {
                                 next as f64
                             }
-                        })])),
+                        }))
+                    )),
 
             _ => Err(SqlError::new("cannot take mean of non-numeric column", Type))
         }

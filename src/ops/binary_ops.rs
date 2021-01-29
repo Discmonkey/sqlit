@@ -35,6 +35,17 @@ pub (super) fn prepare_binary_args(mut input: Vec<Column>) -> SqlResult<Annotate
 }
 
 #[macro_export]
+macro_rules! binary_lift {
+    ($input: ident, |($a:ident, $b:ident)| $block:block) => {
+        if let (Some($a), Some($b)) = $input {
+            Some($block)
+        } else {
+            None
+        }
+    }
+}
+
+#[macro_export]
 macro_rules! binary_iterate {
     ($l:expr, $r:expr, $sizes:expr, |($a:ident, $b:ident)| $block:block) => {
         {
@@ -43,32 +54,16 @@ macro_rules! binary_iterate {
 
             (if $sizes == MapType::SL {
                 l.cycle().zip(r).map(
-                    |t| {
-                        if let (Some($a), Some($b)) = t {
-                            Some($block)
-                        } else {
-                            None
-                        }
-                    }
+                    |t| binary_lift!(t, |($a, $b)| $block)
                 ).collect()
             } else if $sizes == MapType::LS {
                 l.zip(r.cycle()).map(
-                    |t| {
-                        if let (Some($a), Some($b)) = t {
-                            Some($block)
-                        } else {
-                            None
-                        }
-                    }).collect()
+                    |t| binary_lift!(t, |($a, $b)| $block)
+                ).collect()
             } else {
                 l.zip(r).map(
-                    |t| {
-                        if let (Some($a), Some($b)) = t {
-                            Some($block)
-                        } else {
-                            None
-                        }
-                    }).collect()
+                    |t| binary_lift!(t, |($a, $b)| $block)
+                ).collect()
             })
         }
     }

@@ -22,37 +22,36 @@ macro_rules! maybe_length {
     }
 }
 
-const NULL_PRINT_VALUE: &String = &"NULL".to_string();
 
 fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
     let mut scratch = Vec::new();
-    let name_print_width = item_width(&mut dest, name)?;
+    let name_print_width = item_width(&mut scratch, name)?;
 
     macro_rules! find_max {
-        ($vector: ident, |$value: ident| $block:block) => {
+        ($vector: ident, $scratch: ident, |$value: ident| $block:block) => {
             $vector.iter().map(|maybe_value| {
-                maybe_value.map(|$value| {
-                    item_width(&mut scratch, &$block).unwrap_or(0)
+                maybe_value.as_ref().map(|$value| {
+                    item_width(&mut $scratch, $block).unwrap_or(0)
                 }).unwrap_or(0)
             }).max().unwrap_or(0);
         }
     }
     let max_width_column = match col {
         Column::Strings(s) => {
-            find_max!(s, |string| {string})
+            find_max!(s, scratch, |string| {&string})
         },
 
         Column::Ints(i) => {
-            find_max!(i, |int| {int})
+            find_max!(i, scratch, |int| {&int})
         },
 
         Column::Floats(f) => {
-            find_max!(f, |float| {float|})
+            find_max!(f, scratch, |float| {&float})
         },
 
         Column::Dates(d) => {
-            find_max!(d, |timestamp| {
-                NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string()
+            find_max!(d, scratch, |timestamp| {
+                &NaiveDateTime::from_timestamp(timestamp.clone(), 0).to_string()
             })
         },
 
@@ -70,7 +69,13 @@ fn find_column_width(col: &Column, name: &String) -> std::io::Result<usize> {
 fn write_entry(f: &mut std::fmt::Formatter, lengths: &Vec<usize>,
                col: usize, maybe_writable: Option<&dyn Display>, scratch: &mut Vec<u8>) -> std::fmt::Result {
 
-    let writable = maybe_writable.unwrap_or(NULL_PRINT_VALUE as &dyn Display);
+    let null_print = "NULL".to_string();
+
+    let writable = if let Some(writable) = maybe_writable {
+        writable as &dyn Display
+    } else {
+        &null_print as &dyn Display
+    };
 
     let mut write_width = item_width(scratch, writable).map_err(|_| std::fmt::Error::default())?;
 
@@ -110,7 +115,7 @@ impl std::fmt::Display for Table {
 
                 macro_rules! as_display {
                     ($expr: expr) => {
-                       $expr.map(|v| &v as (&dyn std::fmt::Display))
+                       $expr.as_ref().map(|opt| opt as &dyn std::fmt::Display)
                     }
                 }
 

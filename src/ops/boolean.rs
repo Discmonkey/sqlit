@@ -109,7 +109,7 @@ impl MapOp for Not {
         let next = arguments.pop().unwrap();
 
         match next {
-            Column::Booleans(b) => Ok(Column::Booleans(b.into_iter().map(|bool| !bool).collect())),
+            Column::Booleans(b) => Ok(Column::Booleans(b.into_iter().map(|maybe_bool| maybe_bool.map(|b| !b)).collect())),
             _ => Err(SqlError::new("not operator can only be applied to boolean column", Type))
         }
     }

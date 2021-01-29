@@ -6,6 +6,6 @@ pub struct Count{}
 
 impl ReduceOp for Count {
     fn reduce(&self, argument: Column) -> SqlResult<Column> {
-        Ok(Column::Ints(vec![argument.len() as i64]))
+        Ok(Column::Ints(vec![Some(argument.len() as i64)]))
     }
 }

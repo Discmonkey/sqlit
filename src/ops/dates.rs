@@ -13,8 +13,8 @@ impl MapOp for Year {
         } else {
             match arguments.pop().unwrap() {
                 Column::Dates(d) => {
-                    Ok(Column::Ints(d.into_iter().map(|timestamp| {
-                        NaiveDateTime::from_timestamp(timestamp, 0).year() as i64
+                    Ok(Column::Ints(d.into_iter().map(|maybe_timestamp| {
+                        maybe_timestamp.map(|timestamp| NaiveDateTime::from_timestamp(timestamp, 0).year() as i64)
                     }).collect()))
                 }
                 _ => Err(SqlError::new("year function can only be called on date time", Type))
