@@ -10,38 +10,31 @@ struct Order<'a> {
     pub desc: bool,
 }
 
-pub (super) fn eval(maybe_order_by: Option<ParserNode>, mut table: Table) -> SqlResult<Table>{
+pub (super) fn eval(order_by: ParserNode, mut table: &Table) -> SqlResult<Table>{
+    let (_, _, clauses) = order_by.release();
 
-    match maybe_order_by {
-        Some(order_by) => {
-            let (_, _, clauses) = order_by.release();
+    let orders = parse_into_order(clauses, &table)?;
+    let mut sort_order: Vec<usize> = (0..table.len()).collect();
 
-            let orders = parse_into_order(clauses, &table)?;
-            let mut sort_order: Vec<usize> = (0..table.len()).collect();
+    sort_order.sort_by(|&i, &j| {
+        for order in &orders {
+            let (mut a, mut b) = (i, j);
+            if order.desc {
+                a = j;
+                b = i;
+            }
 
-            sort_order.sort_by(|&i, &j| {
-                for order in &orders {
-                    let (mut a, mut b) = (i, j);
-                    if order.desc {
-                        a = j;
-                        b = i;
-                    }
+            let ordering = order.column.elem_order(a, b);
 
-                    let ordering = order.column.elem_order(a, b);
+            if ordering != Ordering::Equal {
+                return ordering;
+            }
+        }
 
-                    if ordering != Ordering::Equal {
-                        return ordering;
-                    }
-                }
+        Ordering::Equal
+    });
 
-                Ordering::Equal
-            });
-
-            Ok(table.order_by(sort_order))
-        },
-
-        None => Ok(table),
-    }
+    Ok(table.order_by(sort_order))
 }
 
 fn parse_into_order(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult<Vec<Order>> {

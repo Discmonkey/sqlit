@@ -11,51 +11,38 @@ pub (super) struct Grouped {
     pub groups: Vec<Table>,
 }
 
-pub (super) enum Either {
-    Group(Grouped),
-    Table(Table),
-}
+pub (super) fn eval(node: ParserNode,
+                    table: &Table,
+                    op_context: &mut OpContext) -> SqlResult<Grouped> {
 
-pub (super) fn eval(maybe_group_by_node: Option<ParserNode>,
-                    table: Table,
-                    op_context: &mut OpContext) -> SqlResult<Either> {
+    let (_, _, mut children) = node.release();
 
-    match maybe_group_by_node {
-        None => Ok(Either::Table(table)),
+    let columns_node = children
+        .pop_front()
+        .ok_or(SqlError::new("group by needs items to group by", Runtime))?;
 
-        Some(node) => {
-            let (_, _, mut children) = node.release();
+    let evaluated_keys = columns::eval(Some(columns_node), op_context, &table)?;
 
-            let columns_node = children
-                .pop_front()
-                .ok_or(SqlError::new("group by needs items to group by", Runtime))?;
+    let (assignments, key_tables) = keys_to_assignments(&evaluated_keys);
 
-            let evaluated_keys = columns::eval(Some(columns_node), op_context, &table)?;
+    Ok(Grouped {
+        groups: key_tables.into_iter().enumerate().map(|(num, mut key_table)| {
+            let selector = assignments.iter().map(|assignment| {
+                Some(assignment == &num)
+            }).collect();
 
-            let (assignments, key_tables) = keys_to_assignments(&evaluated_keys);
+            let selected_rows = table.where_(selector);
 
-            Ok(Either::Group(Grouped {
-                groups: key_tables.into_iter().enumerate().map(|(num, mut key_table)| {
-                    let selector = assignments.iter().map(|assignment| {
-                        Some(assignment == &num)
-                    }).collect();
+            for column in selected_rows.into_columns() {
+                // TODO figure out how to add all columns to a group by
+                if let Err(_) = key_table.column_search(&column.name) {
+                    key_table.push(column, None)
+                }
+            }
 
-                    let selected_rows = table.where_(selector);
-
-                    for column in selected_rows.into_columns() {
-                        // TODO figure out how to add all columns to a group by
-                        if let Err(_) = key_table.column_search(&column.name) {
-                            key_table.push(column, None)
-                        }
-                    }
-
-                    key_table
-
-                    }).collect()
-                })
-            )
-        }
-    }
+            key_table
+        }).collect()
+    })
 }
 
 fn keys_to_assignments(grouped_by_keys: &Table) -> (Vec<usize>, Vec<Table>) {

@@ -155,7 +155,7 @@ impl Table {
         }).collect()
     }
 
-    pub fn order_by(&mut self, order_vec: Vec<usize>) -> Self {
+    pub fn order_by(&self, order_vec: Vec<usize>) -> Self {
         let columns: Vec<Column> = self.columns.iter().map(|c| {
             c.order(&order_vec)
         }).collect();

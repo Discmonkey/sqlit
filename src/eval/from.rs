@@ -2,22 +2,20 @@ use crate::parser::ParserNode;
 use crate::table::{Store as TableContext, Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
-use crate::result::ErrorType::{Syntax};
+use crate::result::ErrorType::{Syntax, Runtime};
 
-fn from_statement_to_table(node: ParserNode, _ops: &mut OpContext, tables: &mut TableContext) -> SqlResult<Table> {
+fn from_statement_to_table<'store_life_time>(node: ParserNode, _ops: &mut OpContext, tables: &'store_life_time mut TableContext) -> SqlResult<&'store_life_time Table> {
     let (_, mut tokens, _) = node.release();
 
-    tables.get(tokens.pop_front().unwrap().get_text()).map(|t| {
-        t.clone()
-    })
+    tables.get(tokens.pop_front().unwrap().get_text())
 }
 
-pub (super) fn eval(root: Option<ParserNode>,
+pub (super) fn eval<'store_life_time>(root: Option<ParserNode>,
                           op_context: &mut OpContext,
-                          table_context: &mut TableContext) -> SqlResult<Table> {
+                          table_context: &'store_life_time mut TableContext) -> SqlResult<&'store_life_time Table> {
 
     if root.is_none() {
-        return Ok(Table::new());
+        return Err(SqlError::new("no table specified", Runtime))
     }
 
     let (_, _, mut children)  = root.unwrap().release();
