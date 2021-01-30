@@ -102,7 +102,7 @@ binary_op_comp_relative!(GreaterOrEqual, >=);
 
 impl MapOp for Not {
     fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
-        arg_check!(1, arguments, "not");
+        arg_check!(1, arguments, "not", !=);
 
         match &arguments[0] {
             Column::Booleans(b) => Ok(Column::Booleans(b.into_iter().map(|maybe_bool| maybe_bool.map(|b| !b)).collect())),

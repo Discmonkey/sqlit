@@ -18,7 +18,7 @@ macro_rules! to_boolean {
 
 impl MapOp for IsNull {
     fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
-        arg_check!(1, arguments, "is_null");
+        arg_check!(1, arguments, "is_null", !=);
 
         Ok(match &arguments[0]{
             Column::Dates(d) => to_boolean!(d, is_none),
@@ -32,7 +32,7 @@ impl MapOp for IsNull {
 
 impl MapOp for NotNull {
     fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
-        arg_check!(1, arguments, "not_null");
+        arg_check!(1, arguments, "not_null", !=);
 
         Ok(match &arguments[0] {
             Column::Dates(d) => to_boolean!(d, is_some),

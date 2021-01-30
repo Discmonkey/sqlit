@@ -5,8 +5,8 @@ use crate::result::{SqlResult, SqlError};
 
 #[macro_use]
 macro_rules! arg_check {
-    ($expected:expr, $got:expr, $name:expr) => {
-        if $expected != $got.len() {
+    ($expected:expr, $got:expr, $name:expr, $comp:tt) => {
+        if $expected $comp $got.len() {
             return Err(SqlError::args_length_error($expected, $got.len(), $name));
         }
     }
@@ -92,7 +92,7 @@ impl OpContext {
         if self.applies.contains_key(function) {
             self.apply(function, arguments)
         } else if self.reducers.contains_key(function) {
-            arg_check!(1, arguments, function);
+            arg_check!(1, arguments, function, <);
 
             self.reduce(function, &arguments[0])
         } else {

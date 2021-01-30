@@ -8,7 +8,7 @@ pub struct Year{}
 
 impl MapOp for Year {
     fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
-        arg_check!(1, arguments, "year");
+        arg_check!(1, arguments, "year", !=);
 
         match &arguments[0] {
             Column::Dates(d) => {
