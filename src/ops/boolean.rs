@@ -25,12 +25,12 @@ macro_rules! binary_op_bool {
 
     ($target_struct:ident, $op:tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
                     bb!(l, r) => {
-                        Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a $op b})))
+                        Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {*a $op *b})))
                     },
                     _ => Err(SqlError::new("boolean op can only be performed on two boolean columns", Type)),
                 }
@@ -54,7 +54,7 @@ macro_rules! right_side {
 macro_rules! binary_op_comp {
     ($target_struct: ident, $op: tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
@@ -63,8 +63,8 @@ macro_rules! binary_op_comp {
                     ii!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     dd!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     ff!(l, r) => right_side!(l, r, inputs.sizes, $op),
-                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a as f64 $op b}))),
-                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a $op b as f64}))),
+                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {*a as f64 $op *b}))),
+                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {*a $op *b as f64}))),
                     _ => Err(SqlError::new("incompatible types for boolean comparison", Type))
                 }
             }
@@ -78,15 +78,15 @@ binary_op_comp!(NotEqual, !=);
 macro_rules! binary_op_comp_relative {
     ($target_struct: ident, $op: tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
                     dd!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     ff!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     ii!(l, r) => right_side!(l, r, inputs.sizes, $op),
-                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {(a as f64) $op b}))),
-                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {a $op (b as f64)}))),
+                    if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {(*a as f64) $op *b}))),
+                    fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {*a $op (*b as f64)}))),
                     _ => Err(SqlError::new("incompatible types for boolean comparison", Type))
                 }
             }
@@ -101,14 +101,10 @@ binary_op_comp_relative!(GreaterOrEqual, >=);
 
 
 impl MapOp for Not {
-    fn apply(&self, mut arguments: Vec<Column>) -> SqlResult<Column> {
-        if arguments.len() != 1 {
-            return Err(SqlError::new("not operator takes exactly one column", Runtime));
-        }
+    fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
+        arg_check!(1, arguments, "not");
 
-        let next = arguments.pop().unwrap();
-
-        match next {
+        match &arguments[0] {
             Column::Booleans(b) => Ok(Column::Booleans(b.into_iter().map(|maybe_bool| maybe_bool.map(|b| !b)).collect())),
             _ => Err(SqlError::new("not operator can only be applied to boolean column", Type))
         }

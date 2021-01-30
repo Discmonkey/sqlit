@@ -88,7 +88,7 @@ fn left_associative_helper(mut tokens: VecDeque<Token>,
             op_context, table)?;
 
         left_result = NamedColumn {
-            column: op_context.apply(op.get_text().as_str(), vec![
+            column: op_context.apply(op.get_text().as_str(), &vec![
                 left_result.column, right_result.column])?,
             name: op.to_string()
         }
@@ -128,7 +128,7 @@ fn eval_unary(node: ParserNode, op_context: &mut OpContext, table: &Table) -> Sq
             let op = t.get_text();
 
             Ok(NamedColumn {
-                column: op_context.apply(op.as_str(), vec![evaluated.column])?,
+                column: op_context.apply(op.as_str(), &vec![evaluated.column])?,
                 name: op.clone(),
             })
         },
@@ -188,7 +188,7 @@ fn eval_function(node: ParserNode, op_context: &mut OpContext, table: &Table) ->
 
     let op = tokens.pop_front().ok_or(SqlError::new("function without name", Syntax))?;
 
-    op_context.dispatch(op.get_text().as_str(), columns).map(|col| {
+    op_context.dispatch(op.get_text().as_str(), &columns).map(|col| {
         NamedColumn {
             column: col,
             name: op.get_text().clone()

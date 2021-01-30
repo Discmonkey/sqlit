@@ -81,7 +81,7 @@ impl Tokenizer {
             [\s]* #skip white spaces
             (?P<keyword>SELECT\s|FROM\s|WHERE\s|GROUP\s+BY|LEFT\s+JOIN|INNER\s+JOIN|ORDER\s+BY|INTO\s|LIMIT\s|ASC\s|DESC\s|AS\s)
             |
-            (?P<operator>>=|<=|[-+/*><=]|or\s|and\s|!=)
+            (?P<operator>>=|<=|[-+/*><=]|or\s|and\s|!=|=)
             |
             (?P<literal>'.+'|[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?|[0-9]+|true\s|false\s|null\s)
             |

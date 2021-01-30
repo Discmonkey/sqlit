@@ -26,11 +26,11 @@ use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
 
 pub trait MapOp {
-    fn apply(&self, arguments: Vec<Column>) -> SqlResult<Column>;
+    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column>;
 }
 
 pub trait ReduceOp {
-    fn reduce(&self, argument: Column) -> SqlResult<Column>;
+    fn reduce(&self, argument: &Column) -> SqlResult<Column>;
 }
 
 pub struct OpContext {
@@ -76,24 +76,25 @@ impl OpContext {
         context
     }
 
-    pub fn apply(&self, function: &str, arguments: Vec<Column>) -> SqlResult<Column> {
+    pub fn apply(&self, function: &str, arguments: &Vec<Column>) -> SqlResult<Column> {
         self.applies.get(function).map(|f| {
             f.apply(arguments)
         }).ok_or(SqlError::new("no such op", Lookup))?
     }
 
-    pub fn reduce(&self, function: &str, argument: Column) -> SqlResult<Column> {
+    pub fn reduce(&self, function: &str, argument: &Column) -> SqlResult<Column> {
         self.reducers.get(function).map(|r| {
             r.reduce(argument)
         }).ok_or(SqlError::new("no such reducer", Lookup))?
     }
 
-    pub fn dispatch(&self, function: &str, mut arguments: Vec<Column>) -> SqlResult<Column> {
+    pub fn dispatch(&self, function: &str, mut arguments: &Vec<Column>) -> SqlResult<Column> {
         if self.applies.contains_key(function) {
             self.apply(function, arguments)
         } else if self.reducers.contains_key(function) {
-            self.reduce(function, arguments.pop().ok_or(
-                SqlError::new("reducer called without arguments", Runtime))?)
+            arg_check!(1, arguments, function);
+
+            self.reduce(function, &arguments[0])
         } else {
             Err(SqlError::new("could not find function", Lookup))
         }

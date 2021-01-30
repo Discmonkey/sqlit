@@ -7,6 +7,11 @@ use crate::ingest::SepFinder;
 
 impl Store {
 
+    pub fn new() -> Self {
+        Store {
+            tables: HashMap::new()
+        }
+    }
     pub fn from_paths(csv_paths: Vec<String>, separator: &Box<dyn SepFinder>, null: &str) -> io::Result<Self> {
 
         csv_paths.into_iter().map(|path| {
@@ -19,6 +24,10 @@ impl Store {
     pub fn get(&self, alias: &str) -> SqlResult<&Table> {
         self.tables.get(alias).ok_or(
             SqlError::new(format!("alias {} not found in store", alias).as_str(), Lookup))
+    }
+
+    pub fn set(&mut self, table: Table) {
+        self.tables.insert(table.alias(), table);
     }
 
     pub fn list(&self) -> Vec<&Table> {

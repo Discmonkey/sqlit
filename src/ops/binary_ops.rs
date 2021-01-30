@@ -9,19 +9,19 @@ pub (super) enum MapType {
     LS,
 }
 
-pub (super) struct AnnotatedInput {
-    pub left: Column,
-    pub right: Column,
+pub (super) struct AnnotatedInput<'a> {
+    pub left: &'a Column,
+    pub right: &'a Column,
     pub sizes: MapType,
 }
 
-pub (super) fn prepare_binary_args(mut input: Vec<Column>) -> SqlResult<AnnotatedInput> {
+pub (super) fn prepare_binary_args(input: &Vec<Column>) -> SqlResult<AnnotatedInput> {
     if input.len() != 2 {
         return Err(SqlError::new("incorrect number of arguments for binary op", Runtime));
     }
 
-    let right = input.pop().unwrap();
-    let left = input.pop().unwrap();
+    let ref left = input[0];
+    let ref right = input[1];
 
     if left.len() == right.len() {
         Ok(AnnotatedInput {left, right, sizes: MapType::LL})
