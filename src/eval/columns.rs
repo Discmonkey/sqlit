@@ -214,7 +214,21 @@ fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
     let (_, tokens, _) = node.release();
 
     Ok(NamedColumn {
-        column: build_column(tokens.iter().map(|t| t.get_text().clone()).collect(), "nan"),
+        column: build_column(tokens.iter()
+                                 .map(|mut t| {
+                                     let mut s = t.get_text().clone();
+
+                                     // clean up in case of 'string'
+                                     if let Some(stripped) = s.strip_prefix('\'') {
+                                         s = stripped.to_string();
+                                     }
+
+                                     if let Some(stripped) = s.strip_suffix('\'') {
+                                         s = stripped.to_string();
+                                     }
+
+                                     s
+                                 }).collect(), "nan"),
         name: "".to_string(),
     })
 }

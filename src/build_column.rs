@@ -20,18 +20,10 @@ pub fn build_column(raw_values: Vec<String>, null_as_string: &str) -> Column {
                                                                Box::new(ToFloat{}), null_as_string) {
         converted_column
     } else {
-        Column::Strings(raw_values.into_iter().map(|mut s| {
+        Column::Strings(raw_values.into_iter().map(|s| {
             if &s == null_as_string {
                 None
             } else {
-                if let Some(stripped) = s.strip_prefix('\'') {
-                    s = stripped.to_string();
-                }
-
-                if let Some(stripped) = s.strip_suffix('\'') {
-                    s = stripped.to_string();
-                }
-
                 Some(s)
             }
         }).collect())
