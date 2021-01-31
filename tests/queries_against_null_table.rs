@@ -1,10 +1,21 @@
 use sqlit;
 
+// null_test
+//
+// first,second,third
+// 0,"hello",null
+// 0,"bye",true
+// 1,"null",false
+// null,"null",false
 
 fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
     let input = query.to_string();
 
-    let store = sqlit::table::Store::new();
+    let store = sqlit::table::Store::from_paths(vec!["tests/data/null_test.csv".to_string()],
+                                                &(Box::new(sqlit::ingest::CsvFinder{}) as Box<dyn sqlit::ingest::SepFinder>), "null").map_err(|_| {
+        sqlit::result::SqlError::new("could not read in table", sqlit::result::ErrorType::Runtime)
+    })?;
+
     let mut ops = sqlit::ops::OpContext::new();
 
     let tokenizer = sqlit::tokenizer::Tokenizer::new();
@@ -15,8 +26,8 @@ fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
 }
 
 #[test]
-fn test_string_equality() {
-    let result = eval_query("select 'hello' = 'hello'");
+fn test_column_is_hello() {
+    let result = eval_query("select second = 'hello' from null_test where second = 'hello'");
 
     match result {
         Err(_e) => assert!(false),
