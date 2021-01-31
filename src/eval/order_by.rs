@@ -10,7 +10,7 @@ struct Order<'a> {
     pub desc: bool,
 }
 
-pub (super) fn eval(order_by: ParserNode, mut table: &Table) -> SqlResult<Table>{
+pub (super) fn eval(order_by: ParserNode, table: &Table) -> SqlResult<Table>{
     let (_, _, clauses) = order_by.release();
 
     let orders = parse_into_order(clauses, &table)?;

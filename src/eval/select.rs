@@ -13,6 +13,10 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
                     table_context: &TableContext) -> SqlResult<Table> {
 
     let parts = split::split(root)?;
+
+    // when possible we want to use references to a table that currently exists, ie avoid copying 300,000 columns * 10 rows on larger tables
+    // on the other hand, when there is a need to mutate the underlying structure (such as on a where or a sort), we do want the freedom
+    // to mutate or assign to something
     let mut permanent_table = Table::new();
     let mut table = &permanent_table;
 
@@ -27,8 +31,8 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
 
     let selected_table = if let Some(group_by) = parts.group_by {
         let grouped = group_by::eval(group_by, table, op_context, table_context)?;
-
         let mut column_selections = Vec::new();
+
         for _ in 0..grouped.groups.len() {
             column_selections.push(parts.columns.clone());
         }
@@ -57,11 +61,10 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
         }
 
     } else {
-        let mut temp_table;
         columns::eval(parts.columns, op_context,
             if let Some(order) = parts.order_by {
-                temp_table = order_by::eval(order, &table)?;
-                &temp_table
+                permanent_table = order_by::eval(order, &table)?;
+                &permanent_table
             } else {
                 table
             }, table_context)?
