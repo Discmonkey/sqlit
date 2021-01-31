@@ -20,7 +20,9 @@ fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
 
     let tokenizer = sqlit::tokenizer::Tokenizer::new();
 
-    let parsed = sqlit::parser::rdp::RecursiveDescentParser::new(tokenizer.tokenize(input)).parse()?;
+    let tokens = tokenizer.tokenize(input);
+
+    let parsed = sqlit::parser::rdp::RecursiveDescentParser::new(tokens).parse()?;
 
     sqlit::eval::eval(parsed, &mut ops, &store)
 }
@@ -32,6 +34,9 @@ fn test_column_is_hello() {
     match result {
         Err(_e) => assert!(false),
         Ok(t) => {
+
+            assert!(t.len() > 0);
+
             let cols = t.into_columns();
 
             assert_eq!(cols.len(), 1);

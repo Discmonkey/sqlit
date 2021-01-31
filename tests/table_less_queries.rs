@@ -9,7 +9,9 @@ fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
 
     let tokenizer = sqlit::tokenizer::Tokenizer::new();
 
-    let parsed = sqlit::parser::rdp::RecursiveDescentParser::new(tokenizer.tokenize(input)).parse()?;
+    let tokens = tokenizer.tokenize(input);
+
+    let parsed = sqlit::parser::rdp::RecursiveDescentParser::new(tokens).parse()?;
 
     sqlit::eval::eval(parsed, &mut ops, &store)
 }

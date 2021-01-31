@@ -20,10 +20,18 @@ pub fn build_column(raw_values: Vec<String>, null_as_string: &str) -> Column {
                                                                Box::new(ToFloat{}), null_as_string) {
         converted_column
     } else {
-        Column::Strings(raw_values.into_iter().map(|s| {
+        Column::Strings(raw_values.into_iter().map(|mut s| {
             if &s == null_as_string {
                 None
             } else {
+                if let Some(stripped) = s.strip_prefix('\'') {
+                    s = stripped.to_string();
+                }
+
+                if let Some(stripped) = s.strip_suffix('\'') {
+                    s = stripped.to_string();
+                }
+
                 Some(s)
             }
         }).collect())
@@ -83,6 +91,23 @@ mod test {
         match column {
             Column::Strings(_) => {
                 assert!(true)
+            }
+
+            _ => {
+                assert!(false)
+            }
+        }
+    }
+
+    #[test]
+    fn string_column() {
+        let raw_string = vec!("'hello'").iter().map(|v| v.to_string()).collect();
+
+        let column = build_column(raw_string, "nan");
+
+        match column {
+            Column::Strings(s) => {
+                assert_eq!(s[0].as_ref().unwrap(), "hello");
             }
 
             _ => {

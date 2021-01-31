@@ -85,6 +85,7 @@ macro_rules! binary_op_comp_relative {
                     dd!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     ff!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     ii!(l, r) => right_side!(l, r, inputs.sizes, $op),
+                    ss!(l, r) => right_side!(l, r, inputs.sizes, $op),
                     if_!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {(*a as f64) $op *b}))),
                     fi!(l, r) => Ok(Column::Booleans(binary_iterate!(l, r, inputs.sizes, |(a, b)| {*a $op (*b as f64)}))),
                     _ => Err(SqlError::new("incompatible types for boolean comparison", Type))

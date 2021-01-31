@@ -117,9 +117,6 @@ macro_rules! if_ {
 }
 
 
-
-
-
 #[cfg(test)]
 mod test {
     use crate::ops::binary_ops::MapType;
