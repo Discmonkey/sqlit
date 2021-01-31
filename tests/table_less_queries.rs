@@ -36,3 +36,27 @@ fn test_string_equality() {
         }
     }
 }
+
+#[test]
+fn test_select_from_select() {
+    let result = eval_query("select second, first from (select 1 as first, 2 as second) table");
+
+    match result {
+        Err(e) => {
+            println!("{}", e);
+            assert!(false)
+        },
+        Ok(t) => {
+            let cols = t.into_columns();
+
+            assert_eq!(cols.len(), 2);
+
+            match &cols[0].column {
+                sqlit::table::Column::Ints(i) => {
+                    assert_eq!(i[0].unwrap(), 2)
+                },
+                _ => assert!(false)
+            }
+        }
+    }
+}
