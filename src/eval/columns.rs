@@ -6,7 +6,7 @@ use crate::result::ErrorType::{Runtime, Syntax};
 use std::collections::VecDeque;
 use crate::tokenizer::{Token, TokenType};
 use crate::build_column::build_column;
-use crate::parser::ParserNodeType::{StarOperator, Identifier};
+use crate::parser::ParserNodeType::{StarOperator};
 use crate::parser::rdp::RecursiveDescentParser;
 use crate::eval::select;
 

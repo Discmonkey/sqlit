@@ -1,13 +1,13 @@
 use crate::ops::MapOp;
 use crate::result::{SqlResult, SqlError};
 use crate::table::Column;
-use crate::result::ErrorType::{Syntax, Type};
+use crate::result::ErrorType::{ Type};
 use chrono::{NaiveDateTime, Datelike};
 
 pub struct Year{}
 
 impl MapOp for Year {
-    fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
+    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
         arg_check!(1, arguments, "year", !=);
 
         match &arguments[0] {

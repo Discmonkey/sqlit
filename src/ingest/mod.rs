@@ -1,6 +1,3 @@
-use std::str::Chars;
-use std::collections::VecDeque;
-use regex::Regex;
 use std::fmt::Write;
 
 mod common;
@@ -92,12 +89,6 @@ impl SepFinder for SpacesFinder {
     }
 }
 
-macro_rules! not {
-    ($expr: expr) => {
-        !$expr
-    }
-}
-
 pub fn read_line(line: String, separator_reader: &Box<dyn SepFinder>) -> Vec<String> {
     let chars: Vec<char> = line.chars().collect();
     let mut fields = Vec::new();
@@ -161,7 +152,6 @@ fn read_until(character: char,
 
 #[cfg(test)]
 mod test {
-    use std::collections::VecDeque;
     use crate::ingest::{CsvFinder, read_line, SepFinder, read_field};
 
     #[test]

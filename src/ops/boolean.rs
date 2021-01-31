@@ -101,7 +101,7 @@ binary_op_comp_relative!(GreaterOrEqual, >=);
 
 
 impl MapOp for Not {
-    fn apply(&self, mut arguments: &Vec<Column>) -> SqlResult<Column> {
+    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
         arg_check!(1, arguments, "not", !=);
 
         match &arguments[0] {

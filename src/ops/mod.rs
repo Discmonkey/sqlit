@@ -21,7 +21,7 @@ mod null_ops;
 
 use std::collections::HashMap;
 use crate::table::Column;
-use crate::result::ErrorType::{Lookup, Runtime};
+use crate::result::ErrorType::{Lookup};
 use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
 
@@ -88,7 +88,7 @@ impl OpContext {
         }).ok_or(SqlError::new("no such reducer", Lookup))?
     }
 
-    pub fn dispatch(&self, function: &str, mut arguments: &Vec<Column>) -> SqlResult<Column> {
+    pub fn dispatch(&self, function: &str, arguments: &Vec<Column>) -> SqlResult<Column> {
         if self.applies.contains_key(function) {
             self.apply(function, arguments)
         } else if self.reducers.contains_key(function) {

@@ -1,5 +1,5 @@
 use crate::eval::{split, where_, limit};
-use crate::table::{Table, Store as TableContext, Store};
+use crate::table::{Table, Store as TableContext};
 use crate::parser::ParserNode;
 use crate::ops::OpContext;
 use crate::result::{SqlResult, SqlError};
