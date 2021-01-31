@@ -1,5 +1,5 @@
 use crate::parser::ParserNode;
-use crate::table::{Table};
+use crate::table::{Table, Store};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use super::columns;
@@ -13,7 +13,7 @@ pub (super) struct Grouped {
 
 pub (super) fn eval(node: ParserNode,
                     table: &Table,
-                    op_context: &mut OpContext) -> SqlResult<Grouped> {
+                    op_context: &mut OpContext, store: &Store) -> SqlResult<Grouped> {
 
     let (_, _, mut children) = node.release();
 
@@ -21,7 +21,7 @@ pub (super) fn eval(node: ParserNode,
         .pop_front()
         .ok_or(SqlError::new("group by needs items to group by", Runtime))?;
 
-    let evaluated_keys = columns::eval(Some(columns_node), op_context, &table)?;
+    let evaluated_keys = columns::eval(Some(columns_node), op_context, &table, store)?;
 
     let (assignments, key_tables) = keys_to_assignments(&evaluated_keys);
 

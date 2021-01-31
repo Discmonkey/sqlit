@@ -4,21 +4,17 @@ use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use crate::result::ErrorType::{Syntax, Runtime};
 
-fn from_statement_to_table<'store_life_time>(node: ParserNode, _ops: &mut OpContext, tables: &'store_life_time mut TableContext) -> SqlResult<&'store_life_time Table> {
+fn from_statement_to_table<'store_life_time>(node: ParserNode, _ops: &mut OpContext, tables: &'store_life_time TableContext) -> SqlResult<&'store_life_time Table> {
     let (_, mut tokens, _) = node.release();
 
     tables.get(tokens.pop_front().unwrap().get_text())
 }
 
-pub (super) fn eval<'store_life_time>(root: Option<ParserNode>,
+pub (super) fn eval<'store_life_time>(root: ParserNode,
                           op_context: &mut OpContext,
-                          table_context: &'store_life_time mut TableContext) -> SqlResult<&'store_life_time Table> {
+                          table_context: &'store_life_time TableContext) -> SqlResult<&'store_life_time Table> {
 
-    if root.is_none() {
-        return Err(SqlError::new("no table specified", Runtime))
-    }
-
-    let (_, _, mut children)  = root.unwrap().release();
+    let (_, _, mut children)  = root.release();
 
     if children.is_empty() {
         return Err(SqlError::new("from does not reference any tables", Syntax));

@@ -26,7 +26,7 @@ impl SqlError {
 
     pub fn args_length_error(num_args_expected: usize,
                              num_args_received: usize, function_name: &str) -> Self {
-        let message = format!("{} expects {} but received {}", function_name, num_args_expected, num_args_received);
+        let message = format!("{} expects {} argument(s) but received {} argument(s)", function_name, num_args_expected, num_args_received);
 
         SqlError {
             type_: Runtime,

@@ -512,6 +512,15 @@ mod test {
 
         assert!(parsed.is_ok());
     }
+
+    #[test]
+    fn multiple_where() {
+        let t = Tokenizer::new();
+        let query = "select * from table where (a = 2) and (b = 3)";
+        let parsed = RecursiveDescentParser::new(t.tokenize(query.to_string())).parse();
+
+        assert!(parsed.is_ok());
+    }
 }
 
 

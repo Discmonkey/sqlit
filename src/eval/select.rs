@@ -1,5 +1,5 @@
 use crate::eval::{split, where_, limit};
-use crate::table::{Table, Store as TableContext};
+use crate::table::{Table, Store as TableContext, Store};
 use crate::parser::ParserNode;
 use crate::ops::OpContext;
 use crate::result::{SqlResult, SqlError};
@@ -9,20 +9,24 @@ use super::order_by;
 use super::group_by;
 use crate::result::ErrorType::Runtime;
 
-pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &mut TableContext) -> SqlResult<Table> {
+pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
+                    table_context: &TableContext) -> SqlResult<Table> {
 
     let parts = split::split(root)?;
+    let mut permanent_table = Table::new();
+    let mut table = &permanent_table;
 
-    let mut table = from::eval(parts.from, op_context, table_context)?;
-    let mut permanent_table;
+    if let Some(node) = parts.from {
+        table = from::eval(node, op_context, table_context)?;
+    }
 
     if let Some(node) = parts.where_ {
-        permanent_table = where_::eval(node, table, op_context)?;
+        permanent_table = where_::eval(node, table, op_context, table_context)?;
         table = &permanent_table;
     }
 
     let selected_table = if let Some(group_by) = parts.group_by {
-        let grouped = group_by::eval(group_by, table, op_context)?;
+        let grouped = group_by::eval(group_by, table, op_context, table_context)?;
 
         let mut column_selections = Vec::new();
         for _ in 0..grouped.groups.len() {
@@ -33,7 +37,7 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
             .zip(column_selections.into_iter())
             .map(|(t, columns)| {
 
-                let selected = columns::eval(columns, op_context, &t)?;
+                let selected = columns::eval(columns, op_context, &t, table_context)?;
 
                 if selected.len() > 1 {
                     Err(SqlError::new("length of group by result is greater than one, \
@@ -60,8 +64,7 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext, table_context:
                 &temp_table
             } else {
                 table
-            }
-        )?
+            }, table_context)?
     };
 
     let limited_table = limit::eval(parts.limit, selected_table)?;
