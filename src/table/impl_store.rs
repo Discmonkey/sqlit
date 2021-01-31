@@ -43,7 +43,7 @@ mod test {
 
     #[test]
     fn test_get() -> std::io::Result<()>{
-        let mut s = Store::from_paths(vec!["test_data/nba.games.stats.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null")?;
+        let mut s = Store::from_paths(vec!["data/nba.games.stats.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null")?;
 
 
         match s.get("nba_games_stats") {
