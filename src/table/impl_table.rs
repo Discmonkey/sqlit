@@ -241,7 +241,7 @@ mod test {
     fn build_table() {
         time_test!();
 
-        let parsed_table = table::Table::from_file("data/data.csv", &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null");
+        let parsed_table = table::Table::from_file("tests/data/music.csv", &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null");
 
         match parsed_table {
             Ok(t) => assert!(t.len() > 0),

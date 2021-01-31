@@ -1,4 +1,4 @@
-use crate::table::{Store as TableContext};
+use crate::table::{Store, Table};
 use crate::parser::{ParserNode, ParserNodeType};
 use crate::ops::OpContext;
 use crate::result::{SqlResult, SqlError};
@@ -13,9 +13,9 @@ mod limit;
 mod order_by;
 mod group_by;
 
-pub fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &mut TableContext) -> SqlResult<Box<dyn std::fmt::Display>> {
+pub fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &Store) -> SqlResult<Table> {
     match root.get_type() {
-        ParserNodeType::Query => select::eval(root, op_context, table_context).map(|t| Box::new(t) as Box<dyn std::fmt::Display>),
+        ParserNodeType::Query => select::eval(root, op_context, table_context),
         _ => Err(SqlError::new("command not recognized, please use one of [<select...>]", Runtime))
     }
 }

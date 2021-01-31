@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use crate::ingest::{SepFinder, TsvFinder, SpacesFinder, CsvFinder};
+use sqlit::ingest::{SepFinder, TsvFinder, SpacesFinder, CsvFinder};
 
 pub struct Config {
     pub table_paths: Vec<String>,

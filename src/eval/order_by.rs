@@ -71,11 +71,11 @@ mod test {
     #[test]
     fn test_danceability() -> SqlResult<()>{
 
-        let mut table_store = table::Store::from_paths(vec!["data/data.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null")
+        let mut table_store = table::Store::from_paths(vec!["tests/data/music.csv".to_string()], &(Box::new(CsvFinder{}) as Box<dyn SepFinder>), "null")
             .map_err(|_| SqlError::new("", Runtime))?;
 
         let t = Tokenizer::new();
-        let tokens= t.tokenize("select name, danceability from data order by danceability".to_string());
+        let tokens= t.tokenize("select name, danceability from music order by danceability".to_string());
         let parsed = RecursiveDescentParser::new(tokens).parse()?;
         let mut ops = ops::OpContext::new();
 

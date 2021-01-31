@@ -1,20 +1,15 @@
-mod args;
-mod build_column;
-mod converters;
-mod eval;
-mod parser;
-mod result;
-mod table;
-mod ops;
-mod tokenizer;
-mod linefeed_io;
-mod ingest;
-
 use linefeed;
-use crate::parser::rdp::RecursiveDescentParser;
 use std::sync::Arc;
-use crate::linefeed_io::TableCompleter;
-use crate::ingest::CsvFinder;
+
+use sqlit::ingest::CsvFinder;
+use sqlit::linefeed_io::TableCompleter;
+use sqlit::parser::rdp::RecursiveDescentParser;
+use sqlit::tokenizer;
+use sqlit::table;
+use sqlit::ops;
+use sqlit::eval;
+
+mod args;
 
 fn main() -> std::io::Result<()> {
 
@@ -66,7 +61,3 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-
-#[cfg(test)]
-#[macro_use]
-extern crate time_test;
