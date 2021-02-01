@@ -201,7 +201,7 @@ impl RecursiveDescentParser {
         node.add_child(self.parse_factor()?);
 
         while let Some(t) = self.tokens.front() {
-            if t.is("-") || t.is("+") {
+            if t.is("-") || t.is("+") || t.is("%") {
                 node.add_token(self.tokens.pop_front().unwrap());
                 node.add_child(self.parse_factor()?);
             } else {

@@ -22,7 +22,7 @@ mod null_ops;
 use std::collections::HashMap;
 use crate::table::Column;
 use crate::result::ErrorType::{Lookup};
-use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum};
+use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum, Mod};
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
 
 pub trait MapOp {
@@ -49,6 +49,7 @@ impl OpContext {
         context.set_apply("*", Box::new(Multiply{}));
         context.set_apply("-", Box::new(Subtract{}));
         context.set_apply("/", Box::new(Divide{}));
+        context.set_apply("%", Box::new(Mod{}));
 
         context.set_reduce("max", Box::new(Max{}));
         context.set_reduce("min", Box::new(Min{}));

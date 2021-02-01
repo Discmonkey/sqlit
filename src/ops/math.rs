@@ -9,6 +9,7 @@ pub (super) struct Multiply{}
 pub (super) struct Add{}
 pub (super) struct Subtract{}
 pub (super) struct Divide{}
+pub (super) struct Mod{}
 
 // reduce ops
 pub (super) struct Sum{}
@@ -65,6 +66,7 @@ map_op_impl!(Multiply, *);
 map_op_impl!(Add, +);
 map_op_impl!(Subtract, -);
 map_op_impl!(Divide, /);
+map_op_impl!(Mod, %);
 
 macro_rules! vec_wrap {
     ($expr: expr) => {

@@ -8,6 +8,7 @@ use super::columns;
 use super::order_by;
 use super::group_by;
 use crate::result::ErrorType::Runtime;
+use crate::eval::from::EitherTable;
 
 pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
                     table_context: &TableContext) -> SqlResult<Table> {
@@ -21,7 +22,9 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
     let mut table = &permanent_table;
 
     if let Some(node) = parts.from {
-        table = from::eval(node, op_context, table_context)?;
+        if let EitherTable::Ref(t) = from::eval(node, op_context, table_context)? {
+            table = t;
+        }
     }
 
     if let Some(node) = parts.where_ {

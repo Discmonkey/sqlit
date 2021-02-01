@@ -3,6 +3,7 @@ use crate::table::{Store as TableContext, Table};
 use crate::result::{SqlResult, SqlError};
 use crate::ops::OpContext;
 use crate::result::ErrorType::{Syntax};
+use std::rc;
 
 fn from_statement_to_table<'store_life_time>(node: ParserNode, _ops: &mut OpContext, tables: &'store_life_time TableContext) -> SqlResult<&'store_life_time Table> {
     let (_, mut tokens, _) = node.release();
@@ -10,12 +11,16 @@ fn from_statement_to_table<'store_life_time>(node: ParserNode, _ops: &mut OpCont
     tables.get(tokens.pop_front().unwrap().get_text())
 }
 
-pub (super) fn eval<'store_life_time>(root: ParserNode,
-                          op_context: &mut OpContext,
-                          table_context: &'store_life_time TableContext) -> SqlResult<&'store_life_time Table> {
+pub enum EitherTable<'store_life_time> {
+    Ref(&'store_life_time Table),
+    Real(Table)
+}
+
+pub (super) fn eval<'store_life_time>(root: ParserNode, op_context: &mut OpContext,
+                          table_context: &'store_life_time TableContext) -> SqlResult<EitherTable<'store_life_time>> {
 
     let (_, _, mut children)  = root.release();
-
+    let n = rc::Rc::new();
     if children.is_empty() {
         return Err(SqlError::new("from does not reference any tables", Syntax));
     }
@@ -23,5 +28,5 @@ pub (super) fn eval<'store_life_time>(root: ParserNode,
     // first node will be our from statement
     let table = from_statement_to_table(children.pop_front().unwrap(), op_context, table_context)?;
 
-    Ok(table)
+    Ok(EitherTable::Ref(table))
 }
