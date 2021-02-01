@@ -13,7 +13,7 @@ pub (super) struct Grouped {
 
 pub (super) fn eval(node: ParserNode,
                     table: &Table,
-                    op_context: &mut OpContext, store: &Store) -> SqlResult<Grouped> {
+                    op_context: &OpContext, store: &Store) -> SqlResult<Grouped> {
 
     let (_, _, mut children) = node.release();
 

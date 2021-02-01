@@ -9,9 +9,8 @@ use super::order_by;
 use super::group_by;
 use crate::result::ErrorType::Runtime;
 use std::rc::Rc;
-use std::convert::TryInto;
 
-pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
+pub (super) fn eval(root: ParserNode, op_context: &OpContext,
                     table_context: &TableContext) -> SqlResult<Table> {
 
     let parts = split::split(root)?;

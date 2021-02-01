@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 
 pub (super) fn eval(node: ParserNode, table: &Table,
-                    mut op_context: &mut OpContext, store: &Store) -> SqlResult<Rc<Table>> {
+                    mut op_context: &OpContext, store: &Store) -> SqlResult<Rc<Table>> {
 
     let (_, _, mut children) = node.release();
     let where_expression = children.pop_front().ok_or(SqlError::new("empty where clause", Runtime))?;

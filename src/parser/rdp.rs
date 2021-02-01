@@ -164,6 +164,8 @@ impl RecursiveDescentParser {
             self.next();
 
             node.add_child(self.parse_identifier()?);
+        } else if self.next_token_type_is(Identifier){
+            node.add_child(self.parse_identifier()?);
         }
 
         Ok(node)
@@ -347,8 +349,12 @@ impl RecursiveDescentParser {
                                              "non-terminated paren in from statement")?;
         }
 
-        node.add_token(self.get_required_token_by_type(Identifier,
-                                                       "name required for join table")?);
+        // skip as syntax
+        if self.next_token_is("as") {
+            self.next();
+        }
+
+        node.add_token(self.get_required_token_by_type(Identifier, "name required for join table")?);
 
         Ok(node)
     }

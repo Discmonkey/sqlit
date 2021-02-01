@@ -93,7 +93,7 @@ mod test {
 
     #[test]
     fn string_column() {
-        let raw_string = vec!("'hello'").iter().map(|v| v.to_string()).collect();
+        let raw_string = vec!("hello").iter().map(|v| v.to_string()).collect();
 
         let column = build_column(raw_string, "nan");
 

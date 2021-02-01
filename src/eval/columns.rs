@@ -11,7 +11,7 @@ use crate::parser::rdp::RecursiveDescentParser;
 use crate::eval::select;
 
 
-pub (super) fn eval(node: Option<ParserNode>, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<Table> {
+pub (super) fn eval(node: Option<ParserNode>, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<Table> {
     let columns_root = node.ok_or(SqlError::new("no columns provided", Runtime))?;
 
     let (_, _, mut children) = columns_root.release();
@@ -52,7 +52,7 @@ fn expand_star_operator(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult
     Ok(expanded_nodes)
 }
 
-pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+pub (super) fn eval_expression(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, _, mut children) = node.release();
 
     let child = children.pop_front().ok_or(SqlError::new("empty expression", Runtime))?;
@@ -71,10 +71,10 @@ pub (super) fn eval_expression(node: ParserNode, op_context: &mut OpContext, tab
 
 fn left_associative_helper(mut tokens: VecDeque<Token>,
                       mut nodes: VecDeque<ParserNode>,
-                      op_context: &mut OpContext,
+                      op_context: &OpContext,
                       table: &Table,
                       store: &Store,
-                      next: fn (node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn>) -> SqlResult<NamedColumn> {
+                      next: fn (node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn>) -> SqlResult<NamedColumn> {
 
     let mut left_result = next(
         nodes
@@ -99,27 +99,27 @@ fn left_associative_helper(mut tokens: VecDeque<Token>,
     Ok(left_result)
 }
 
-fn eval_equality(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_equality(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, store, eval_comparison)
 }
 
-fn eval_comparison(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_comparison(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, store, eval_term)
 }
 
-fn eval_term(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_term(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, store, eval_factor)
 }
 
-fn eval_factor(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_factor(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, tokens, nodes) = node.release();
     left_associative_helper(tokens, nodes, op_context, table, store, eval_unary)
 }
 
-fn eval_unary(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_unary(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, mut tokens, mut nodes) = node.release();
 
     let next_node = nodes.pop_front().ok_or(SqlError::new("expected value", Syntax))?;
@@ -139,7 +139,7 @@ fn eval_unary(node: ParserNode, op_context: &mut OpContext, table: &Table, store
     }
 }
 
-fn eval_primary(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_primary(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let (_, _, mut nodes) = node.release();
 
     let next_node = nodes.pop_front().ok_or(SqlError::new("expected value", Syntax))?;
@@ -194,7 +194,7 @@ fn eval_identifier(node: ParserNode, table: &Table) -> SqlResult<NamedColumn> {
     }
 }
 
-fn eval_function(node: ParserNode, op_context: &mut OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
+fn eval_function(node: ParserNode, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<NamedColumn> {
     let(_, mut tokens, mut nodes) = node.release();
 
     let table = eval(nodes.pop_front(), op_context, table, store)?;
