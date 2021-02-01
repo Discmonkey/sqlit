@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::result::ErrorType::{Lookup};
 use std::io;
 use crate::ingest::SepFinder;
+use std::rc::Rc;
 
 impl Store {
 
@@ -16,22 +17,22 @@ impl Store {
 
         csv_paths.into_iter().map(|path| {
             Table::from_file(path.as_str(), separator, null).map(|t| {
-                (t.alias(), t)
+                (t.alias(), Rc::new(t))
             })
-        }).collect::<std::io::Result<HashMap<String, Table>>>().map(|tables| Self {tables})
+        }).collect::<std::io::Result<HashMap<String, Rc<Table>>>>().map(|tables| Self {tables})
     }
 
-    pub fn get(&self, alias: &str) -> SqlResult<&Table> {
-        self.tables.get(alias).ok_or(
+    pub fn get(&self, alias: &str) -> SqlResult<Rc<Table>> {
+        self.tables.get(alias).map(|p| p.clone()).ok_or(
             SqlError::new(format!("alias {} not found in store", alias).as_str(), Lookup))
     }
 
     pub fn set(&mut self, table: Table) {
-        self.tables.insert(table.alias(), table);
+        self.tables.insert(table.alias(), Rc::new(table));
     }
 
     pub fn list(&self) -> Vec<&Table> {
-        self.tables.values().collect()
+        self.tables.values().map(|t| t.as_ref()).collect()
     }
 }
 

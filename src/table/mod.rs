@@ -5,6 +5,7 @@ mod impl_column;
 mod impl_table_hash;
 
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub type DateTime = i64;
 
@@ -48,5 +49,5 @@ pub struct TableMeta {
 }
 
 pub struct Store {
-    tables: HashMap <String, Table>
+    tables: HashMap <String, Rc<Table>>
 }

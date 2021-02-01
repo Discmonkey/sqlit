@@ -8,7 +8,8 @@ use super::columns;
 use super::order_by;
 use super::group_by;
 use crate::result::ErrorType::Runtime;
-use crate::eval::from::EitherTable;
+use std::rc::Rc;
+use std::convert::TryInto;
 
 pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
                     table_context: &TableContext) -> SqlResult<Table> {
@@ -18,22 +19,18 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
     // when possible we want to use references to a table that currently exists, ie avoid copying 300,000 columns * 10 rows on larger tables
     // on the other hand, when there is a need to mutate the underlying structure (such as on a where or a sort), we do want the freedom
     // to mutate or assign to something
-    let mut permanent_table = Table::new();
-    let mut table = &permanent_table;
+    let mut table = Rc::new(Table::new());
 
     if let Some(node) = parts.from {
-        if let EitherTable::Ref(t) = from::eval(node, op_context, table_context)? {
-            table = t;
-        }
+         table = from::eval(node, op_context, table_context)?;
     }
 
     if let Some(node) = parts.where_ {
-        permanent_table = where_::eval(node, table, op_context, table_context)?;
-        table = &permanent_table;
+        table = where_::eval(node, &table, op_context, table_context)?;
     }
 
     let selected_table = if let Some(group_by) = parts.group_by {
-        let grouped = group_by::eval(group_by, table, op_context, table_context)?;
+        let grouped = group_by::eval(group_by, &table, op_context, table_context)?;
         let mut column_selections = Vec::new();
 
         for _ in 0..grouped.groups.len() {
@@ -64,16 +61,20 @@ pub (super) fn eval(root: ParserNode, op_context: &mut OpContext,
         }
 
     } else {
+        let mut temp;
         columns::eval(parts.columns, op_context,
             if let Some(order) = parts.order_by {
-                permanent_table = order_by::eval(order, &table)?;
-                &permanent_table
+                temp = order_by::eval(order, &table)?;
+
+                &temp
             } else {
-                table
+                &table
             }, table_context)?
     };
 
-    let limited_table = limit::eval(parts.limit, selected_table)?;
-
-    Ok(limited_table)
+    if let Some(limit) = parts.limit {
+        limit::eval(limit, selected_table)
+    } else {
+        Ok(selected_table)
+    }
 }

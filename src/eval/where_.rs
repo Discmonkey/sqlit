@@ -4,9 +4,11 @@ use crate::table::{Table, Column, Store};
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Runtime, Type};
 use crate::eval::columns::eval_expression;
+use std::rc::Rc;
+
 
 pub (super) fn eval(node: ParserNode, table: &Table,
-                    mut op_context: &mut OpContext, store: &Store) -> SqlResult<Table> {
+                    mut op_context: &mut OpContext, store: &Store) -> SqlResult<Rc<Table>> {
 
     let (_, _, mut children) = node.release();
     let where_expression = children.pop_front().ok_or(SqlError::new("empty where clause", Runtime))?;
@@ -15,7 +17,7 @@ pub (super) fn eval(node: ParserNode, table: &Table,
 
     match booleans {
         Column::Booleans(b) => {
-            Ok(table.where_(b))
+            Ok(Rc::new(table.where_(b)))
         }
 
         _ => Err(SqlError::new("where clause must evaluate to a boolean column", Type))
