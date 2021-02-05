@@ -31,7 +31,7 @@ pub (super) fn eval(node: ParserNode,
                 Some(assignment == &num)
             }).collect();
 
-            let selected_rows = table.where_(selector);
+            let selected_rows = table.where_(&selector);
 
             for column in selected_rows.into_columns() {
                 // TODO figure out how to add all columns to a group by
@@ -70,7 +70,7 @@ fn keys_to_assignments(grouped_by_keys: &Table) -> (Vec<usize>, Vec<Table>) {
         let mut selector = vec![Some(false); grouped_by_keys.len()];
         selector[i] = Some(true);
 
-        grouped_by_keys.where_(selector)
+        grouped_by_keys.where_(&selector)
     }).collect();
 
     (assignments, tables)

@@ -25,7 +25,7 @@ macro_rules! binary_op_bool {
 
     ($target_struct:ident, $op:tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
@@ -54,7 +54,7 @@ macro_rules! right_side {
 macro_rules! binary_op_comp {
     ($target_struct: ident, $op: tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
@@ -78,7 +78,7 @@ binary_op_comp!(NotEqual, !=);
 macro_rules! binary_op_comp_relative {
     ($target_struct: ident, $op: tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
                 let inputs = prepare_binary_args(arguments)?;
 
                 match (inputs.left, inputs.right) {
@@ -102,7 +102,7 @@ binary_op_comp_relative!(GreaterOrEqual, >=);
 
 
 impl MapOp for Not {
-    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+    fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
         arg_check!(1, arguments, "not", !=);
 
         match &arguments[0] {

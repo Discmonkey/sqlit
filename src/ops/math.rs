@@ -35,7 +35,7 @@ impl<T> FloatIterExt for T where T: Iterator<Item=f64> {
 macro_rules! map_op_impl {
     ($target_struct:ident, $op:tt) => {
         impl MapOp for $target_struct {
-            fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+            fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
                 let input = prepare_binary_args(arguments)?;
 
                 match (input.left, input.right) {

@@ -9,6 +9,7 @@ use crate::build_column::build_column;
 use crate::parser::ParserNodeType::{StarOperator};
 use crate::parser::rdp::RecursiveDescentParser;
 use crate::eval::select;
+use std::rc::Rc;
 
 
 pub (super) fn eval(node: Option<ParserNode>, op_context: &OpContext, table: &Table, store: &Store) -> SqlResult<Table> {
@@ -90,8 +91,8 @@ fn left_associative_helper(mut tokens: VecDeque<Token>,
             op_context, table, store)?;
 
         left_result = NamedColumn {
-            column: op_context.apply(op.get_text().as_str(), &vec![
-                left_result.column, right_result.column])?,
+            column: Rc::new(op_context.apply(op.get_text().as_str(), vec![
+                left_result.column.as_ref(), right_result.column.as_ref()])?),
             name: op.to_string()
         }
     }
@@ -130,7 +131,7 @@ fn eval_unary(node: ParserNode, op_context: &OpContext, table: &Table, store: &S
             let op = t.get_text();
 
             Ok(NamedColumn {
-                column: op_context.apply(op.as_str(), &vec![evaluated.column])?,
+                column: Rc::new(op_context.apply(op.as_str(), vec![evaluated.column.as_ref()])?),
                 name: op.clone(),
             })
         },
@@ -172,7 +173,7 @@ fn eval_identifier(node: ParserNode, table: &Table) -> SqlResult<NamedColumn> {
         1 => {
             let column_identifier = tokens.pop_front().unwrap();
             table.column_search(column_identifier.get_text().as_str()).map(|c| NamedColumn {
-                column: c.clone(),
+                column: c,
                 name: column_identifier.get_text().clone(),
             })
         },
@@ -185,7 +186,7 @@ fn eval_identifier(node: ParserNode, table: &Table) -> SqlResult<NamedColumn> {
                 column_identifier.get_text().as_str(),
             ).map(|c| {
                 NamedColumn {
-                    column: c.clone(),
+                    column: c,
                     name: column_identifier.get_text().clone()
                 }
             }).ok_or(SqlError::new("column not found", Runtime))
@@ -198,13 +199,13 @@ fn eval_function(node: ParserNode, op_context: &OpContext, table: &Table, store:
     let(_, mut tokens, mut nodes) = node.release();
 
     let table = eval(nodes.pop_front(), op_context, table, store)?;
-    let columns = table.into_columns().into_iter().map(|c| c.column).collect();
+    let columns = table.into_columns();
 
     let op = tokens.pop_front().ok_or(SqlError::new("function without name", Syntax))?;
 
-    op_context.dispatch(op.get_text().as_str(), &columns).map(|col| {
+    op_context.dispatch(op.get_text().as_str(), columns.iter().map(|c| c.column.as_ref()).collect()).map(|col| {
         NamedColumn {
-            column: col,
+            column: Rc::new(col),
             name: op.get_text().clone()
         }
     })
@@ -214,7 +215,7 @@ fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
     let (_, tokens, _) = node.release();
 
     Ok(NamedColumn {
-        column: build_column(tokens.iter()
+        column: Rc::new(build_column(tokens.iter()
                                  .map(|mut t| {
                                      let mut s = t.get_text().clone();
 
@@ -228,7 +229,7 @@ fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
                                      }
 
                                      s
-                                 }).collect(), "nan"),
+                                 }).collect(), "nan")),
         name: "".to_string(),
     })
 }

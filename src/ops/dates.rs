@@ -7,7 +7,7 @@ use chrono::{NaiveDateTime, Datelike};
 pub struct Year{}
 
 impl MapOp for Year {
-    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column> {
+    fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column> {
         arg_check!(1, arguments, "year", !=);
 
         match &arguments[0] {

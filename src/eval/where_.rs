@@ -15,7 +15,7 @@ pub (super) fn eval(node: ParserNode, table: &Table,
 
     let booleans = eval_expression(where_expression, &mut op_context, &table, store)?.column;
 
-    match booleans {
+    match booleans.as_ref() {
         Column::Booleans(b) => {
             Ok(Rc::new(table.where_(b)))
         }

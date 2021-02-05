@@ -15,7 +15,7 @@ pub (super) struct AnnotatedInput<'a> {
     pub sizes: MapType,
 }
 
-pub (super) fn prepare_binary_args(input: &Vec<Column>) -> SqlResult<AnnotatedInput> {
+pub (super) fn prepare_binary_args(input: Vec<&Column>) -> SqlResult<AnnotatedInput> {
     if input.len() != 2 {
         return Err(SqlError::new("incorrect number of arguments for binary op", Runtime));
     }

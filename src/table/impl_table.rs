@@ -8,6 +8,7 @@ use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Lookup, Runtime};
 use crate::table::{Table, Column, NamedColumn, TableMeta};
 use crate::ingest::{SepFinder, read_line};
+use std::rc::Rc;
 
 /// uses the filename minus the extension
 fn extract_table_name(file_path: &str) -> Option<String> {
@@ -21,6 +22,7 @@ impl Table {
     pub fn new() -> Self {
         Table {
             alias: "".to_string(),
+            limit: None,
             columns: Vec::new(),
             column_map: HashMap::new(),
             column_names: Vec::new(),
@@ -62,37 +64,42 @@ impl Table {
             line_counter += 1;
         }
 
-        let columns = raw_string_columns.into_par_iter().map(|s| {
+        let columns: Vec<Column> = raw_string_columns.into_par_iter().map(|s| {
             build_column(s, null)
         }).collect();
 
         Ok(Table {
-            alias, column_map, column_names, columns
+            limit: None, alias, column_map, column_names, columns: columns.into_iter().map(|c| Rc::new(c)).collect()
         })
     }
     /// roughly equivalent to a union operation
     pub fn from_tables(mut tables: Vec<Self>) -> SqlResult<Self> {
-        let mut first = tables.pop().ok_or(SqlError::new("cannot build table from empty result set",
-                                                     Runtime))?;
 
-        for table in tables.into_iter() {
-            for (num, c) in table.into_columns().into_iter().enumerate() {
-                &first.columns[num].merge(c.column);
-            }
-        };
+        if tables.len() > 0 {
+            let first = Ok(tables.pop().unwrap());
 
-        Ok(first)
+            tables.into_iter().fold(first, |acc, next| {
+                match acc {
+                    Err(e) => Err(e),
+                    Ok(c) => c.merge(&next)
+                }
+            })
+
+        } else {
+            Ok(Self::new())
+        }
     }
 
-    pub fn column(&self, table: &str, name: &str) -> Option<&Column> {
+    pub fn column(&self, table: &str, name: &str) -> Option<Rc<Column>> {
         let key = (table.to_string().to_lowercase(), name.to_string());
         let index = self.column_map.get(&key)?.clone();
-        Some(&self.columns[index])
+
+        Some(self.columns[index].clone())
     }
 
     /// column search is a non fully qualified column access IE SELECT a FROM table
     /// as opposed to SELECT table.a FROM table
-    pub fn column_search(&self, name: &str) -> SqlResult<&Column> {
+    pub fn column_search(&self, name: &str) -> SqlResult<Rc<Column>> {
         let mut index = 0;
         let mut found_once = false;
         for (num, column) in self.column_names.iter().enumerate() {
@@ -107,10 +114,10 @@ impl Table {
         }
 
         if !found_once {
-            return Err(SqlError::new("column not found in table", Lookup))
+            Err(SqlError::look_up_error(name, "table"))
+        } else {
+            Ok(self.columns[index].clone())
         }
-
-        Ok(&self.columns[index])
     }
 
     pub fn len(&self) -> usize {
@@ -118,9 +125,7 @@ impl Table {
     }
 
     pub fn limit(&mut self, length: usize) {
-        for i in 0..self.columns.len() {
-            self.columns[i].limit(length);
-        }
+        self.limit = Some(length)
     }
 
     pub fn meta(&self) -> TableMeta {
@@ -132,6 +137,19 @@ impl Table {
             length: self.len(),
             alias: self.alias.clone()
         }
+    }
+
+    pub fn merge(&self, other: &Self) -> SqlResult<Self> {
+        let columns = self.columns.iter().zip(other.columns.iter()).map(|(c0, c1)| {
+            c0.merge(c1).map(|c| Rc::new(c))
+        }).collect::<SqlResult<Vec<Rc<Column>>>>()?;
+
+        let column_names = self.column_names.clone();
+        let column_map = self.column_map.clone();
+
+        Ok(Self {
+            columns, alias: self.alias.clone(), column_names, column_map, limit: None
+        })
     }
 
     pub fn push(&mut self, column: NamedColumn, table: Option<&str>) {
@@ -156,8 +174,8 @@ impl Table {
     }
 
     pub fn order_by(&self, order_vec: Vec<usize>) -> Self {
-        let columns: Vec<Column> = self.columns.iter().map(|c| {
-            c.order(&order_vec)
+        let columns: Vec<Rc<Column>> = self.columns.iter().map(|c| {
+            Rc::new(c.order(&order_vec))
         }).collect();
 
         Self {
@@ -165,15 +183,17 @@ impl Table {
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
             column_map: self.column_map.clone(),
+            limit: None,
         }
     }
 
-    pub fn where_(&self, mask: Vec<Option<bool>>) -> Self {
-        let columns: Vec<Column> = self.columns.iter().map(|c| {
-            c.select(&mask)
+    pub fn where_(&self, mask: &Vec<Option<bool>>) -> Self {
+        let columns: Vec<Rc<Column>> = self.columns.iter().map(|c| {
+            Rc::new(c.select(&mask))
         }).collect();
 
         Self {
+            limit: None,
             columns,
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
@@ -181,23 +201,6 @@ impl Table {
         }
     }
 }
-
-// trim string from white spaces, also replace "|' from first and last characters
-fn clean(raw: &str) -> String {
-    let mut s: String = raw.trim()
-        .chars()
-        .skip_while(|c| {
-            c.eq(&'\"') || c.eq(&'\'')
-        })
-        .collect();
-
-    while s.ends_with(&"\"") || s.ends_with(&"\'") {
-        s.truncate(s.len() - 1)
-    }
-
-    s
-}
-
 
 fn parse_header_line(header_line: String, separator: &Box<dyn SepFinder>) -> Vec<String> {
     read_line(header_line, separator).into_iter().enumerate().map(|(num, s)| {

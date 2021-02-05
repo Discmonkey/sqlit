@@ -85,7 +85,7 @@ impl SepFinder for SpacesFinder {
             count += 1;
         }
 
-        return count > 2;
+        return count > 3;
     }
 }
 

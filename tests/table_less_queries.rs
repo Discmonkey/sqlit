@@ -27,7 +27,7 @@ fn test_string_equality() {
 
             assert_eq!(cols.len(), 1);
 
-            match &cols[0].column {
+            match cols[0].column.as_ref() {
                 sqlit::table::Column::Booleans(b) => {
                     assert!(b[0].unwrap());
                 },
@@ -51,7 +51,7 @@ fn test_select_from_select() {
 
             assert_eq!(cols.len(), 2);
 
-            match &cols[0].column {
+            match cols[0].column.as_ref() {
                 sqlit::table::Column::Ints(i) => {
                     assert_eq!(i[0].unwrap(), 2)
                 },

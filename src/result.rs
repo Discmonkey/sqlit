@@ -1,6 +1,6 @@
 use std::fmt;
 use std::error::Error;
-use crate::result::ErrorType::Runtime;
+use crate::result::ErrorType::{Runtime, Lookup};
 
 
 #[derive(Debug, Clone)]
@@ -30,6 +30,15 @@ impl SqlError {
 
         SqlError {
             type_: Runtime,
+            message
+        }
+    }
+
+    pub fn look_up_error(key: &str, store: &str) -> Self {
+        let message = format!("{} not found in {}", key, store);
+
+        SqlError {
+            type_: Lookup,
             message
         }
     }

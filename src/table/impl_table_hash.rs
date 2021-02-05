@@ -8,7 +8,7 @@ impl Table {
         let mut hasher = DefaultHasher::new();
 
         self.columns.iter().for_each(|column| {
-            match column {
+            match column.as_ref() {
                 Column::Booleans(v) => v[idx].hash(&mut hasher),
                 Column::Ints(v) => v[idx].hash(&mut hasher),
                 Column::Floats(v) => (v[idx].map(|i| (i * 1e6).round() as i64)).hash(&mut hasher),

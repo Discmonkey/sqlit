@@ -30,7 +30,7 @@ pub enum Column {
 #[derive(Clone, Debug)]
 pub struct NamedColumn {
     pub name: String,
-    pub column: Column
+    pub column: Rc<Column>
 }
 
 #[derive(Clone)]
@@ -38,7 +38,8 @@ pub struct Table {
     alias: String,
     column_names: Vec<String>, // list of columns names
     column_map: HashMap<(String, String), usize>, // a map of (table, column name) to indices
-    columns: Vec<Column>, // the actual data
+    columns: Vec<Rc<Column>>, // the actual data
+    limit: Option<usize>,
 }
 
 #[derive(Clone)]

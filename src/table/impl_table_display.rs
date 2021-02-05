@@ -119,7 +119,7 @@ impl std::fmt::Display for Table {
                     }
                 }
 
-                match col {
+                match col.as_ref() {
                     Column::Strings(s) => write_entry(f,
                                                       &column_print_widths,
                                                       num, as_display!(s[index]),

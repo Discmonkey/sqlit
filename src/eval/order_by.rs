@@ -6,8 +6,8 @@ use std::collections::VecDeque;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-struct Order<'a> {
-    pub column: &'a Column,
+struct Order {
+    pub column: Rc<Column>,
     pub desc: bool,
 }
 

@@ -26,7 +26,7 @@ use crate::ops::math::{Add, Multiply, Subtract, Divide, Max, Min, Mean, Sum, Mod
 use crate::ops::boolean::{Not, Or, And, NotEqual, Equal, Xor, Less, GreaterOrEqual, LessOrEqual, Greater};
 
 pub trait MapOp {
-    fn apply(&self, arguments: &Vec<Column>) -> SqlResult<Column>;
+    fn apply(&self, arguments: Vec<&Column>) -> SqlResult<Column>;
 }
 
 pub trait ReduceOp {
@@ -77,7 +77,7 @@ impl OpContext {
         context
     }
 
-    pub fn apply(&self, function: &str, arguments: &Vec<Column>) -> SqlResult<Column> {
+    pub fn apply(&self, function: &str, arguments: Vec<&Column>) -> SqlResult<Column> {
         self.applies.get(function).map(|f| {
             f.apply(arguments)
         }).ok_or(SqlError::new("no such op", Lookup))?
@@ -89,13 +89,13 @@ impl OpContext {
         }).ok_or(SqlError::new("no such reducer", Lookup))?
     }
 
-    pub fn dispatch(&self, function: &str, arguments: &Vec<Column>) -> SqlResult<Column> {
+    pub fn dispatch(&self, function: &str, arguments: Vec<&Column>) -> SqlResult<Column> {
         if self.applies.contains_key(function) {
             self.apply(function, arguments)
         } else if self.reducers.contains_key(function) {
             arg_check!(1, arguments, function, >);
 
-            self.reduce(function, &arguments[0])
+            self.reduce(function, arguments[0])
         } else {
             Err(SqlError::new("could not find function", Lookup))
         }

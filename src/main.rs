@@ -1,7 +1,6 @@
 use linefeed;
 use std::sync::Arc;
 
-use sqlit::ingest::CsvFinder;
 use sqlit::linefeed_io::TableCompleter;
 use sqlit::parser::rdp::RecursiveDescentParser;
 use sqlit::tokenizer;

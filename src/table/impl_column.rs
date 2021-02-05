@@ -43,14 +43,9 @@ fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
 
 
 impl Column {
-    pub fn limit(&mut self, length: usize) {
-        apply!(self, truncate, length);
-    }
-
     pub fn len(&self) -> usize {
         apply!(self, len,)
     }
-
 
     pub fn select(&self, selections: &Vec<Option<bool>>) -> Self {
         match self {
@@ -110,7 +105,7 @@ impl Column {
         }
     }
 
-    pub fn merge(&mut self, other: Self) -> SqlResult<()>{
+    pub fn merge(&self, other: &Self) -> SqlResult<Self>{
         macro_rules! other {
             ($v1:ident, $t2:ident, $other:ident) => {
                  if let Column::$t2(v2) = $other {
@@ -123,7 +118,9 @@ impl Column {
             }
         }
 
-        match self {
+        let mut my_clone = self.clone();
+
+        match &mut my_clone {
             Column::Booleans(v1) => other!(v1, Booleans, other),
             Column::Ints(v1) => other!(v1, Ints, other),
             Column::Floats(v1) => other!(v1, Floats, other),
@@ -131,7 +128,7 @@ impl Column {
             Column::Dates(v1) => other!(v1, Dates, other),
         };
 
-        Ok(())
+        Ok(my_clone)
     }
 }
 
