@@ -17,16 +17,11 @@ pub (super) fn eval(root: ParserNode, op_context: &OpContext,
                     table_context: &TableContext) -> SqlResult<Table> {
 
     let parts = split::split(root)?;
-    let mut a_map = AliasMap::new();
 
-    // when possible we want to use references to a table that currently exists, ie avoid copying 300,000 columns * 10 rows on larger tables
-    // on the other hand, when there is a need to mutate the underlying structure (such as on a where or a sort), we do want the freedom
-    // to mutate or assign to something
-    let mut table = Rc::new(Table::new());
-
-    if let Some(node) = parts.from {
-         table = from::eval(node, op_context, table_context, &mut a_map)?;
-    }
+    let mut table = match parts.from {
+        Some(node) => from::eval(node, op_context, table_context)?,
+        None => Table::new(),
+    };
 
     if let Some(node) = parts.where_ {
         table = where_::eval(node, &table, op_context, table_context)?;

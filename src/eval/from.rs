@@ -16,15 +16,24 @@ fn from_statement_to_table(node: ParserNode,
 
     let (_, mut tokens, mut children) = node.release();
 
-    let table_name = tokens.pop_front().ok_or(SqlError::new("join table needs identifier", Runtime))?;
-    let maybe_alias = tokens.pop_front();
+    if !children.is_empty() {
+        let alias = tokens.pop_front().ok_or(SqlError::new("missing alias on select clause", Runtime))?;
 
-    (if !children.is_empty() {
-        select::eval(children.pop_front().unwrap(), ops, tables)
-            .map(|t| { Rc::new(t)  })
+        select::eval(children.pop_front().unwrap(), ops, tables).map(|t| {
+            t.with_new_alias(alias.to_string())
+        })
+
     } else {
-        tables.get(table_name.get_text())
-    })
+        let table_name = tokens.pop_front().ok_or(SqlError::new("table name required", Runtime))?;
+        let maybe_alias = tokens.pop_front();
+
+        tables.get(table_name.get_text()).map(|t| {
+            match maybe_alias {
+                None => t.clone(),
+                Some(alias) => t.with_new_alias(alias.to_string())
+            }
+        })
+    }
 
 }
 
@@ -32,10 +41,7 @@ fn join(left: Rc<Table>, right: Rc<Table>, expression: ParserNode) {
 
 }
 
-pub (super) fn eval(root: ParserNode, ops: &OpContext,
-                          table_context: &TableContext, a_map: &mut AliasMap) -> SqlResult<Rc<Table>> {
-
-
+pub (super) fn eval(root: ParserNode, ops: &OpContext, table_context: &TableContext) -> SqlResult<Table> {
     let (_, _, mut children)  = root.release();
 
     if children.is_empty() {
@@ -48,11 +54,11 @@ pub (super) fn eval(root: ParserNode, ops: &OpContext,
             parser_node.get_type() == &ParserNodeType::FromStatement
         });
 
-    let mut tables: VecDeque<Rc<Table>> = table_nodes
+    let mut tables: VecDeque<Table> = table_nodes
         .into_iter()
         .map(|node| {
             from_statement_to_table(node, ops, table_context)
-        }).collect::<SqlResult<VecDeque<Rc<Table>>>>()?;
+        }).collect::<SqlResult<VecDeque<Table>>>()?;
 
     let first = tables.pop_front().ok_or(SqlError::new("select target not found", Runtime))?;
 

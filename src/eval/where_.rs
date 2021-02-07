@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 
 pub (super) fn eval(node: ParserNode, table: &Table,
-                    mut op_context: &OpContext, store: &Store) -> SqlResult<Rc<Table>> {
+                    mut op_context: &OpContext, store: &Store) -> SqlResult<Table> {
 
     let (_, _, mut children) = node.release();
     let where_expression = children.pop_front().ok_or(SqlError::new("empty where clause", Runtime))?;
@@ -17,7 +17,7 @@ pub (super) fn eval(node: ParserNode, table: &Table,
 
     match booleans.as_ref() {
         Column::Booleans(b) => {
-            Ok(Rc::new(table.where_(b)))
+            Ok(table.where_(b))
         }
 
         _ => Err(SqlError::new("where clause must evaluate to a boolean column", Type))

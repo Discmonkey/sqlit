@@ -50,5 +50,5 @@ pub struct TableMeta {
 }
 
 pub struct Store {
-    tables: HashMap <String, Rc<Table>>
+    tables: HashMap <String, Table>
 }
