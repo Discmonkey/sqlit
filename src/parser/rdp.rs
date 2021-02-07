@@ -345,16 +345,23 @@ impl RecursiveDescentParser {
 
             node.add_child(self.parse_query()?);
 
-            self.get_required_token_by_value(")",
-                                             "non-terminated paren in from statement")?;
-        }
+            self.get_required_token_by_value(")", "non-terminated paren in from statement")?;
 
-        // skip as syntax
-        if self.next_token_is("as") {
-            self.next();
-        }
+            if self.next_token_is("as") {
+                self.next();
+            }
 
-        node.add_token(self.get_required_token_by_type(Identifier, "name required for join table")?);
+            node.add_token(self.get_required_token_by_type(Identifier, "select as table must be followed by table name")?);
+        } else {
+            node.add_token(self.get_required_token_by_type(Identifier, "name or (select ...) required after from clause")?);
+
+            if self.next_token_is("as") {
+                self.next();
+                node.add_token(self.get_required_token_by_type(Identifier, "name required after as")?);
+            } else if self.next_token_type_is(Identifier) {
+                node.add_token(self.next());
+            }
+        }
 
         Ok(node)
     }

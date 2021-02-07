@@ -12,24 +12,20 @@ use crate::eval::select::AliasMap;
 
 fn from_statement_to_table(node: ParserNode,
                            ops: &OpContext,
-                           tables: &TableContext,
-                           a_map: &mut AliasMap) -> SqlResult<Rc<Table>> {
+                           tables: &TableContext) -> SqlResult<Table> {
 
     let (_, mut tokens, mut children) = node.release();
 
     let table_name = tokens.pop_front().ok_or(SqlError::new("join table needs identifier", Runtime))?;
+    let maybe_alias = tokens.pop_front();
 
-    let result = if !children.is_empty() {
-        select::eval(children.pop_front().unwrap(), ops, tables).map(|t| Rc::new(t))
+    (if !children.is_empty() {
+        select::eval(children.pop_front().unwrap(), ops, tables)
+            .map(|t| { Rc::new(t)  })
     } else {
         tables.get(table_name.get_text())
-    };
+    })
 
-    result.iter().for_each(|r| {
-        a_map.insert(table_name.to_string(), r.alias().to_string());
-    });
-
-    result
 }
 
 fn join(left: Rc<Table>, right: Rc<Table>, expression: ParserNode) {
@@ -55,7 +51,7 @@ pub (super) fn eval(root: ParserNode, ops: &OpContext,
     let mut tables: VecDeque<Rc<Table>> = table_nodes
         .into_iter()
         .map(|node| {
-            from_statement_to_table(node, ops, table_context, a_map)
+            from_statement_to_table(node, ops, table_context)
         }).collect::<SqlResult<VecDeque<Rc<Table>>>>()?;
 
     let first = tables.pop_front().ok_or(SqlError::new("select target not found", Runtime))?;

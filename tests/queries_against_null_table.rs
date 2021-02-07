@@ -41,7 +41,7 @@ fn test_column_is_hello() {
 
             assert_eq!(cols.len(), 1);
 
-            match &cols[0].column {
+            match cols[0].column.as_ref() {
                 sqlit::table::Column::Booleans(b) => {
                     assert!(b[0].unwrap());
                 },

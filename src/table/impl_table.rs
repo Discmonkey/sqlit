@@ -29,6 +29,20 @@ impl Table {
         }
     }
 
+    /// returns the same table, but with a different alias, ie FROM old_name new_name
+    pub fn with_new_alias(&self, alias: String) -> Self {
+
+        let mut empty = Self::new();
+
+        self.columns.iter().zip(self.column_names.iter()).for_each(|(column, name)| {
+            empty.push(NamedColumn {
+                column: column.clone(), name: name.clone()
+            }, Some(alias.as_str()))
+        });
+
+        empty
+    }
+
     pub fn alias(&self) -> String {
         self.alias.clone()
     }
@@ -224,21 +238,8 @@ mod test {
 
 
     use crate::table;
-    use crate::table::impl_table::clean;
     use crate::ingest::{CsvFinder, SepFinder};
 
-    #[test]
-    fn test_string_clean() {
-        time_test!();
-
-        let something = "\"something\"";
-        let something_else = "'yep'";
-        let with_spaces = "    spaces man";
-
-        assert_eq!(clean(something), "something".to_string());
-        assert_eq!(clean(something_else), "yep".to_string());
-        assert_eq!(clean(with_spaces), "spaces man".to_string());
-    }
 
     #[test]
     fn build_table() {
