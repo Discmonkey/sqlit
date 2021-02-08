@@ -15,7 +15,17 @@ macro_rules! apply {
     }
 }
 
-
+macro_rules! apply_block {
+    ($column: expr, $value: ident, $block: block) => {
+        match $column {
+            Column::Booleans($value) => Column::Booleans($block),
+            Column::Dates($value) => Column::Dates($block),
+            Column::Floats($value) => Column::Floats($block),
+            Column::Ints($value) => Column::Ints($block),
+            Column::Strings($value) => Column::Strings($block),
+        }
+    }
+}
 
 fn select<T: Clone>(values: &Vec<T>, selections: &Vec<Option<bool>>) -> Vec<T> {
     values.into_iter().zip(selections.iter()).filter_map(|(val, s)| {
@@ -103,6 +113,13 @@ impl Column {
             Column::Dates(d) => d[i1].cmp(&d[i2]),
             Column::Strings(s) => s[i1].cmp(&s[i2])
         }
+    }
+
+
+    pub fn limit(&self, size: usize) -> Self {
+        apply_block!(self, vector, {
+            vector.iter().map(|item| item.clone()).take(size).collect()
+        })
     }
 
     pub fn merge(&self, other: &Self) -> SqlResult<Self>{

@@ -19,7 +19,6 @@ pub (super) fn eval(node: ParserNode, mut table: Table) -> SqlResult<Table> {
                 SqlError::new("could not parse limit, only integers supported", Type)
             })?;
 
-        table.limit(limit_by);
+        Ok(table.limit(limit_by))
 
-        Ok(table)
 }

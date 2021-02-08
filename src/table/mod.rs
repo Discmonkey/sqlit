@@ -39,7 +39,6 @@ pub struct Table {
     column_names: Vec<String>, // list of columns names
     column_map: HashMap<(String, String), usize>, // a map of (table, column name) to indices
     columns: Vec<Rc<Column>>, // the actual data
-    limit: Option<usize>,
 }
 
 #[derive(Clone)]

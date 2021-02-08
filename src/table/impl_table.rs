@@ -22,7 +22,6 @@ impl Table {
     pub fn new() -> Self {
         Table {
             alias: "".to_string(),
-            limit: None,
             columns: Vec::new(),
             column_map: HashMap::new(),
             column_names: Vec::new(),
@@ -83,7 +82,7 @@ impl Table {
         }).collect();
 
         Ok(Table {
-            limit: None, alias, column_map, column_names, columns: columns.into_iter().map(|c| Rc::new(c)).collect()
+            alias, column_map, column_names, columns: columns.into_iter().map(|c| Rc::new(c)).collect()
         })
     }
     /// roughly equivalent to a union operation
@@ -138,8 +137,15 @@ impl Table {
         self.columns.iter().map(|c| c.len()).max().unwrap_or(0)
     }
 
-    pub fn limit(&mut self, length: usize) {
-        self.limit = Some(length)
+    pub fn limit(&mut self, length: usize) -> Self {
+        Self {
+            alias: self.alias.clone(),
+            column_names: self.column_names.clone(),
+            columns: self.columns.iter().map(|c| {
+                Rc::new(c.limit(length))
+            }).collect(),
+            column_map: self.column_map.clone()
+        }
     }
 
     pub fn meta(&self) -> TableMeta {
@@ -162,7 +168,7 @@ impl Table {
         let column_map = self.column_map.clone();
 
         Ok(Self {
-            columns, alias: self.alias.clone(), column_names, column_map, limit: None
+            columns, alias: self.alias.clone(), column_names, column_map
         })
     }
 
@@ -197,7 +203,6 @@ impl Table {
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
             column_map: self.column_map.clone(),
-            limit: None,
         }
     }
 
@@ -207,7 +212,6 @@ impl Table {
         }).collect();
 
         Self {
-            limit: None,
             columns,
             column_names: self.column_names.clone(),
             alias: self.alias.clone(),
