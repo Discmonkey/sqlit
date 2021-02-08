@@ -78,6 +78,7 @@ impl Table {
         }
     }
 
+    /// Creates an empty table
     pub fn new() -> Self {
         Table {
             alias: "".to_string(),
@@ -87,8 +88,20 @@ impl Table {
         }
     }
 
+    /// Returns the table's alias
     pub fn alias(&self) -> String {
         self.alias.clone()
+    }
+
+    pub fn alias_ref(&self) -> &str {
+        &self.alias
+    }
+
+    pub fn as_columns(&self) -> Vec<(&str, &Column)> {
+        self.column_names.iter()
+            .zip(self.columns.iter())
+            .map(|(name, c)| (name.as_ref(), c.as_ref()))
+            .collect()
     }
 
     pub fn column(&self, table: &str, name: &str) -> Option<Rc<Column>> {
@@ -147,7 +160,7 @@ impl Table {
 
     pub fn merge(&self, other: &Self) -> SqlResult<Self> {
         let columns = self.columns.iter().zip(other.columns.iter()).map(|(c0, c1)| {
-            c0.merge(c1).map(|c| Rc::new(c))
+            c0.concat(c1).map(|c| Rc::new(c))
         }).collect::<SqlResult<Vec<Rc<Column>>>>()?;
 
         let column_names = self.column_names.clone();
@@ -160,9 +173,9 @@ impl Table {
 
     pub fn meta(&self) -> TableMeta {
         TableMeta {
-            columns: self.columns.iter().zip( self.column_names.iter()).map(
-                |(column, name)| {
-                    (name.clone(), column.type_())
+            columns: self.column_map.iter().map(
+                |((table, column_name), idx)| {
+                    (table.clone(), column_name.clone(), self.columns[*idx].type_())
                 }).collect(),
             length: self.len(),
             alias: self.alias.clone()
@@ -195,6 +208,28 @@ impl Table {
         }
     }
 
+    pub fn row(&self, idx: usize) -> Option<Table> {
+        if idx > self.len() {
+            None
+        } else {
+            Some(Self {
+                columns: self.columns.iter().map(|c| Rc::new(c.row(idx))).collect(),
+                alias: self.alias.clone(),
+                column_map: self.column_map.clone(),
+                column_names: self.column_names.clone()
+            })
+        }
+    }
+
+    pub fn to_columns(&self) -> Vec<NamedColumn> {
+        self.columns.iter().zip(self.column_names.iter()).map(|(c, name)| {
+            NamedColumn {
+                column: c.clone(),
+                name: name.clone()
+            }
+        }).collect()
+    }
+
     pub fn with_new_alias(&self, alias: String) -> Self {
 
         let mut empty = Self::new();
@@ -204,6 +239,8 @@ impl Table {
                 column: column.clone(), name: name.clone()
             }, Some(alias.as_str()))
         });
+
+        empty.alias = alias;
 
         empty
     }

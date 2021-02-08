@@ -15,7 +15,7 @@ impl<Term: Terminal> Completer<Term> for TableCompleter {
                 completions.push(Completion::simple(metadata.alias.clone()))
             }
 
-            metadata.columns.iter().for_each(|(c, _)| {
+            metadata.columns.iter().for_each(|(_, c, _)| {
                 if c.starts_with(_word) {
                     completions.push(Completion::simple(c.clone()))
                 }

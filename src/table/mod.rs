@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 pub type DateTime = i64;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ColumnType {
     Float,
     Int,
@@ -43,7 +43,7 @@ pub struct Table {
 
 #[derive(Clone)]
 pub struct TableMeta {
-    pub columns: Vec<(String, ColumnType)>,
+    pub columns: Vec<(String, String, ColumnType)>,
     pub length: usize,
     pub alias: String,
 }

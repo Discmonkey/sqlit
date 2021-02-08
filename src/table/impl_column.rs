@@ -1,21 +1,23 @@
 use crate::table::{Column, ColumnType};
 use std::cmp::Ordering;
 use crate::result::{SqlResult, SqlError};
-use crate::result::ErrorType::Runtime;
+use crate::result::ErrorType::{Runtime, Type};
 
-macro_rules! apply {
-    ($column: expr, $method: tt, $($arg:expr),*) => {
+/// apply block returns a non-column, which makes it useful for general vector operations such as len()
+macro_rules! apply_block {
+    ($column: expr, $value: ident, $block: block) => {
         match $column {
-            Column::Booleans(b) => b.$method($($arg,)*),
-            Column::Dates(d) => d.$method($($arg,)*),
-            Column::Floats(f) => f.$method($($arg,)*),
-            Column::Ints(i) => i.$method($($arg,)*),
-            Column::Strings(s) => s.$method($($arg,)*),
+            Column::Booleans($value) => $block,
+            Column::Dates($value) => $block,
+            Column::Floats($value) => $block,
+            Column::Ints($value) => $block,
+            Column::Strings($value) => $block,
         }
     }
 }
 
-macro_rules! apply_block {
+/// map block returns a column, which makes it useful for operations that return another Column object such as limit
+macro_rules! map_block {
     ($column: expr, $value: ident, $block: block) => {
         match $column {
             Column::Booleans($value) => Column::Booleans($block),
@@ -23,6 +25,19 @@ macro_rules! apply_block {
             Column::Floats($value) => Column::Floats($block),
             Column::Ints($value) => Column::Ints($block),
             Column::Strings($value) => Column::Strings($block),
+        }
+    }
+}
+
+macro_rules! cross_apply {
+    ($col_1: expr, $col_2: expr, $v1: ident, $v2: ident, $block: block, $err: block) => {
+        match ($col_1, $col_2) {
+            (Column::Booleans($v1), Column::Booleans($v2)) => $block,
+            (Column::Dates($v1), Column::Dates($v2))  => $block,
+            (Column::Floats($v1), Column::Floats($v2))  => $block,
+            (Column::Ints($v1), Column::Ints($v2)) => $block,
+            (Column::Strings($v1), Column::Strings($v2)) => $block,
+            _ => $err
         }
     }
 }
@@ -53,38 +68,23 @@ fn order<T: Clone>(values: &Vec<T>, order: &Vec<usize>) -> Vec<T>{
 
 
 impl Column {
-    pub fn len(&self) -> usize {
-        apply!(self, len,)
+
+    pub fn push_null(&mut self) {
+        apply_block!(self, v, {
+            v.push(None);
+        });
     }
 
-    pub fn select(&self, selections: &Vec<Option<bool>>) -> Self {
-        match self {
-            Column::Booleans(v) => Column::Booleans(select(v, selections)),
-            Column::Ints(v) => Column::Ints(select(v, selections)),
-            Column::Floats(v) => Column::Floats(select(v, selections)),
-            Column::Strings(v) => Column::Strings(select(v, selections)),
-            Column::Dates(v) => Column::Dates(select(v, selections)),
-        }
-    }
+    pub fn extend(&mut self, other: &Self) -> SqlResult<()> {
+        cross_apply!(self, other, v1, v2, {
+            v2.iter().for_each(|value| {
+               v1.push(value.clone())
+            });
 
-    pub fn order(&self, sort_order: &Vec<usize>) -> Self {
-        match self {
-            Column::Booleans(v) => Column::Booleans(order(v, sort_order)),
-            Column::Ints(v) => Column::Ints(order(v, sort_order)),
-            Column::Floats(v) => Column::Floats(order(v, sort_order)),
-            Column::Strings(v) => Column::Strings(order(v, sort_order)),
-            Column::Dates(v) => Column::Dates(order(v, sort_order)),
-        }
-    }
-
-    pub fn type_(&self) -> ColumnType {
-        match self {
-            Column::Booleans(_) => ColumnType::Boolean,
-            Column::Ints(_) => ColumnType::Int,
-            Column::Floats(_) => ColumnType::Float,
-            Column::Dates(_) => ColumnType::Date,
-            Column::Strings(_) => ColumnType::String
-        }
+            Ok(())
+        }, {
+            Err(SqlError::new("cannot extend column with mismatched type", Type))
+        })
     }
 
     pub fn elem_order(&self, i1: usize, i2: usize) -> Ordering {
@@ -115,37 +115,64 @@ impl Column {
         }
     }
 
+    pub fn len(&self) -> usize {
+        apply_block!(self, v, {
+            v.len()
+        })
+    }
 
     pub fn limit(&self, size: usize) -> Self {
-        apply_block!(self, vector, {
+        map_block!(self, vector, {
             vector.iter().map(|item| item.clone()).take(size).collect()
         })
     }
 
-    pub fn merge(&self, other: &Self) -> SqlResult<Self>{
-        macro_rules! other {
-            ($v1:ident, $t2:ident, $other:ident) => {
-                 if let Column::$t2(v2) = $other {
-                    v2.into_iter().for_each(|val| {
-                        $v1.push(val.clone());
-                    })
-                } else {
-                    return Err(SqlError::new("mismatched type on column merge", Runtime));
-                }
-            }
-        }
+    /// returns a new empty Column of the same type
+    pub fn new_empty(&self) -> Self {
+        map_block!(self, v, {
+            vec![]
+        })
+    }
 
+    /// create a new column by concat-ing self and other
+    pub fn concat(&self, other: &Self) -> SqlResult<Self>{
         let mut my_clone = self.clone();
 
-        match &mut my_clone {
-            Column::Booleans(v1) => other!(v1, Booleans, other),
-            Column::Ints(v1) => other!(v1, Ints, other),
-            Column::Floats(v1) => other!(v1, Floats, other),
-            Column::Strings(v1) => other!(v1, Strings, other),
-            Column::Dates(v1) => other!(v1, Dates, other),
-        };
+        my_clone.extend(other)?;
 
         Ok(my_clone)
+    }
+
+    pub fn order(&self, sort_order: &Vec<usize>) -> Self {
+        map_block!(self, v, {
+            order(v, sort_order)
+        })
+    }
+
+    pub fn row(&self, idx: usize) -> Self {
+        map_block!(self, v, {
+            if idx > v.len() {
+                vec![v[0].clone()]
+            } else {
+                vec![v[idx].clone()]
+            }
+        })
+    }
+
+    pub fn select(&self, selections: &Vec<Option<bool>>) -> Self {
+        map_block!(self, v, {
+            select(v, selections)
+        })
+    }
+
+    pub fn type_(&self) -> ColumnType {
+        match self {
+            Column::Booleans(_) => ColumnType::Boolean,
+            Column::Ints(_) => ColumnType::Int,
+            Column::Floats(_) => ColumnType::Float,
+            Column::Dates(_) => ColumnType::Date,
+            Column::Strings(_) => ColumnType::String
+        }
     }
 }
 

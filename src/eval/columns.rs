@@ -38,8 +38,14 @@ fn expand_star_operator(nodes: VecDeque<ParserNode>, table: &Table) -> SqlResult
     for n in nodes.into_iter() {
         if n.get_type() == &StarOperator {
 
-            for (name, _) in table.meta().columns.into_iter() {
+            for (table, name, _) in table.meta().columns.into_iter() {
                 let mut tokens = VecDeque::new();
+
+                if table.len() > 0 {
+                    tokens.push_back(Token::new(table, TokenType::Identifier));
+                    tokens.push_back(Token::new(".".to_string(), TokenType::Separator));
+                }
+
                 tokens.push_back(Token::new(name, TokenType::Identifier));
 
                 expanded_nodes.push_back(RecursiveDescentParser::new(tokens).parse_expression()?);

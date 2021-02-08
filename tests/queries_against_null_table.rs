@@ -50,3 +50,13 @@ fn test_column_is_hello() {
         }
     }
 }
+
+#[test]
+fn test_join() {
+    let result = eval_query("select * from null_test a left join null_test b on a.second = b.second");
+
+    if !result.is_ok() {
+        println!("{}", result.err().unwrap());
+        assert!(false)
+    }
+}

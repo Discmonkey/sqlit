@@ -58,6 +58,10 @@ impl Token {
     pub fn is_type(&self, value: TokenType) -> bool {
         value == self.token_type
     }
+
+    pub fn to_string(&self) -> String {
+        self.text.clone()
+    }
 }
 
 impl fmt::Display for Token {
