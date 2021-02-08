@@ -19,33 +19,7 @@ fn extract_table_name(file_path: &str) -> Option<String> {
 
 impl Table {
 
-    pub fn new() -> Self {
-        Table {
-            alias: "".to_string(),
-            columns: Vec::new(),
-            column_map: HashMap::new(),
-            column_names: Vec::new(),
-        }
-    }
-
-    /// returns the same table, but with a different alias, ie FROM old_name new_name
-    pub fn with_new_alias(&self, alias: String) -> Self {
-
-        let mut empty = Self::new();
-
-        self.columns.iter().zip(self.column_names.iter()).for_each(|(column, name)| {
-            empty.push(NamedColumn {
-                column: column.clone(), name: name.clone()
-            }, Some(alias.as_str()))
-        });
-
-        empty
-    }
-
-    pub fn alias(&self) -> String {
-        self.alias.clone()
-    }
-
+    /// Reads file into table
     pub fn from_file(file_location: &str, separator: &Box<dyn SepFinder>, null: &str) -> Result<Self, std::io::Error> {
         let f = File::open(file_location)?;
 
@@ -61,8 +35,8 @@ impl Table {
         let column_map = create_column_map(&alias, &column_names);
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
-
         let mut line_counter = 0;
+
         for line in lines {
             let parsed = read_line(line?, separator);
 
@@ -85,7 +59,8 @@ impl Table {
             alias, column_map, column_names, columns: columns.into_iter().map(|c| Rc::new(c)).collect()
         })
     }
-    /// roughly equivalent to a union operation
+
+    /// Union all table and return the result
     pub fn from_tables(mut tables: Vec<Self>) -> SqlResult<Self> {
 
         if tables.len() > 0 {
@@ -103,6 +78,19 @@ impl Table {
         }
     }
 
+    pub fn new() -> Self {
+        Table {
+            alias: "".to_string(),
+            columns: Vec::new(),
+            column_map: HashMap::new(),
+            column_names: Vec::new(),
+        }
+    }
+
+    pub fn alias(&self) -> String {
+        self.alias.clone()
+    }
+
     pub fn column(&self, table: &str, name: &str) -> Option<Rc<Column>> {
         let key = (table.to_string().to_lowercase(), name.to_string());
         let index = self.column_map.get(&key)?.clone();
@@ -110,8 +98,9 @@ impl Table {
         Some(self.columns[index].clone())
     }
 
-    /// column search is a non fully qualified column access IE SELECT a FROM table
+    /// Non fully-qualified column access IE SELECT a FROM table
     /// as opposed to SELECT table.a FROM table
+    /// throws an error if the column is not found or if the column name is ambiguous
     pub fn column_search(&self, name: &str) -> SqlResult<Rc<Column>> {
         let mut index = 0;
         let mut found_once = false;
@@ -133,6 +122,14 @@ impl Table {
         }
     }
 
+    pub fn into_columns(self) -> Vec<NamedColumn> {
+        self.columns.into_iter().zip(self.column_names.into_iter()).map(|(column, name)| {
+            NamedColumn {
+                column, name
+            }
+        }).collect()
+    }
+
     pub fn len(&self) -> usize {
         self.columns.iter().map(|c| c.len()).max().unwrap_or(0)
     }
@@ -145,17 +142,6 @@ impl Table {
                 Rc::new(c.limit(length))
             }).collect(),
             column_map: self.column_map.clone()
-        }
-    }
-
-    pub fn meta(&self) -> TableMeta {
-        TableMeta {
-            columns: self.columns.iter().zip( self.column_names.iter()).map(
-                |(column, name)| {
-                    (name.clone(), column.type_())
-                }).collect(),
-            length: self.len(),
-            alias: self.alias.clone()
         }
     }
 
@@ -172,8 +158,19 @@ impl Table {
         })
     }
 
+    pub fn meta(&self) -> TableMeta {
+        TableMeta {
+            columns: self.columns.iter().zip( self.column_names.iter()).map(
+                |(column, name)| {
+                    (name.clone(), column.type_())
+                }).collect(),
+            length: self.len(),
+            alias: self.alias.clone()
+        }
+    }
+
     pub fn push(&mut self, column: NamedColumn, table: Option<&str>) {
-        let table_name = table.unwrap_or("");
+        let table_name = table.unwrap_or(&self.alias);
         let name = column.name;
         let column = column.column;
 
@@ -183,14 +180,6 @@ impl Table {
             (table_name.to_string(), name),
             self.columns.len() - 1
         );
-    }
-
-    pub fn into_columns(self) -> Vec<NamedColumn> {
-        self.columns.into_iter().zip(self.column_names.into_iter()).map(|(column, name)| {
-            NamedColumn {
-                column, name
-            }
-        }).collect()
     }
 
     pub fn order_by(&self, order_vec: Vec<usize>) -> Self {
@@ -204,6 +193,19 @@ impl Table {
             alias: self.alias.clone(),
             column_map: self.column_map.clone(),
         }
+    }
+
+    pub fn with_new_alias(&self, alias: String) -> Self {
+
+        let mut empty = Self::new();
+
+        self.columns.iter().zip(self.column_names.iter()).for_each(|(column, name)| {
+            empty.push(NamedColumn {
+                column: column.clone(), name: name.clone()
+            }, Some(alias.as_str()))
+        });
+
+        empty
     }
 
     pub fn where_(&self, mask: &Vec<Option<bool>>) -> Self {

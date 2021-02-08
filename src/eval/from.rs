@@ -37,7 +37,16 @@ fn from_statement_to_table(node: ParserNode,
 
 }
 
-fn join(left: Rc<Table>, right: Rc<Table>, expression: ParserNode) {
+fn join(left: Table, right: Table, expression: ParserNode, inner: bool) -> Table {
+    // combine each row in the the table on the left, with the table on the right
+
+    // evaluate expression
+
+    // where true write left/right row pairs
+
+    // if all false, write left, null ---- null
+
+    unimplemented!()
 
 }
 
