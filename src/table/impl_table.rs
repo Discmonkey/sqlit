@@ -172,14 +172,27 @@ impl Table {
     }
 
     pub fn meta(&self) -> TableMeta {
+
+        let mut columns: Vec<_> = self.column_map.iter().map(
+            |((table, column_name), idx)| {
+                (table.clone(), column_name.clone(), self.columns[*idx].type_(), *idx)
+            }).collect();
+
+        columns.sort_by(|a, b| {
+            a.3.cmp(&b.3)
+        });
+
         TableMeta {
-            columns: self.column_map.iter().map(
-                |((table, column_name), idx)| {
-                    (table.clone(), column_name.clone(), self.columns[*idx].type_())
-                }).collect(),
+            columns: columns.into_iter().map(|(a, b, c, _)| {
+                (a, b, c)
+            }).collect(),
             length: self.len(),
             alias: self.alias.clone()
         }
+    }
+
+    pub fn num_columns(&self) -> usize {
+        self.columns.len()
     }
 
     pub fn push(&mut self, column: NamedColumn, table: Option<&str>) {

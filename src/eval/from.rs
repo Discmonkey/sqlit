@@ -24,7 +24,6 @@ fn from_statement_to_table(node: ParserNode,
         select::eval(children.pop_front().unwrap(), ops, tables).map(|t| {
             t.with_new_alias(alias.to_string())
         })
-
     } else {
         let table_name = tokens.pop_front().ok_or(SqlError::new("table name required", Runtime))?;
         let maybe_alias = tokens.pop_front();
@@ -60,20 +59,21 @@ fn join(left: Table, right: Table, expression: ParserNode, inner: bool, ops: &Op
         let evaluated = eval_expression(expression.clone(), ops, &temp_table, store)?;
 
         if let Column::Booleans(b) = evaluated.column.as_ref() {
+
             let selected = temp_table.where_(b);
 
             for _ in 0..max(1, selected.len()) {
-                for (num, col) in temp_table.to_columns().into_iter().take(left.len()).enumerate() {
+                for (num, col) in temp_table.to_columns().into_iter().take(left.num_columns()).enumerate() {
                     destination_columns[num].1.extend(col.column.as_ref());
                 }
             }
 
             if selected.len() == 0 {
-                for num in left.len()..temp_table.len() {
+                for num in left.num_columns()..temp_table.num_columns() {
                     destination_columns[num].1.push_null();
                 }
             } else {
-                for (num, col) in selected.to_columns().into_iter().enumerate().skip(left.len()) {
+                for (num, col) in selected.to_columns().into_iter().enumerate().skip(left.num_columns()) {
                     destination_columns[num].1.extend(col.column.as_ref());
                 }
             }
@@ -86,7 +86,7 @@ fn join(left: Table, right: Table, expression: ParserNode, inner: bool, ops: &Op
 
     destination_columns.into_iter().enumerate().for_each(|(num, (name, col))| {
 
-        let table_name = if num < left.len() {
+        let table_name = if num < left.num_columns() {
             left.alias_ref()
         } else {
             right.alias_ref()
@@ -122,9 +122,11 @@ pub (super) fn eval(root: ParserNode, ops: &OpContext, store: &Store) -> SqlResu
 
     let first = tables.pop_front().ok_or(SqlError::new("select target not found", Runtime))?;
 
-    tables
+    let maybe_t = tables
         .into_iter()
         .zip(join_condition_nodes.into_iter()).try_fold(first, |current_join, (table_to_join, expression)| {
             join(current_join, table_to_join, expression, false, ops, store)
-        })
+        })?;
+
+    Ok(maybe_t)
 }

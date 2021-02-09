@@ -53,10 +53,20 @@ fn test_column_is_hello() {
 
 #[test]
 fn test_join() {
-    let result = eval_query("select * from null_test a left join null_test b on a.second = b.second");
+    let result = eval_query("select * from null_test a left join null_test b on a.first = b.first");
 
     if !result.is_ok() {
         println!("{}", result.err().unwrap());
-        assert!(false)
+        assert!(false);
+
+        return;
     }
+
+
+    let t = result.unwrap();
+
+    println!("{}", t);
+    assert_eq!(t.len(), 4);
+
+    assert_eq!(t.to_columns().len(), 6);
 }
