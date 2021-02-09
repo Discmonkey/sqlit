@@ -42,11 +42,11 @@ fn join(left: Table, right: Table, expression: ParserNode, inner: bool, ops: &Op
 
     // if all false, write left, null --
     let mut destination_columns: Vec<(&str, Column)> = left.as_columns().into_iter().map(|(name, c) | {
-        (name, c.clone())
+        (name, c.new_empty())
     }).collect();
 
     right.as_columns().into_iter().for_each(|(name, c) | {
-        destination_columns.push((name, c.clone()));
+        destination_columns.push((name, c.new_empty()));
     });
 
     for row in 0..left.len() {
@@ -61,6 +61,9 @@ fn join(left: Table, right: Table, expression: ParserNode, inner: bool, ops: &Op
         if let Column::Booleans(b) = evaluated.column.as_ref() {
 
             let selected = temp_table.where_(b);
+
+            let length = selected.len();
+            let column_length = destination_columns[0].1.len();
 
             for _ in 0..max(1, selected.len()) {
                 for (num, col) in temp_table.to_columns().into_iter().take(left.num_columns()).enumerate() {
