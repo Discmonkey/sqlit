@@ -66,7 +66,7 @@ fn test_join() {
     let t = result.unwrap();
 
     println!("{}", t);
-    assert_eq!(t.len(), 4);
+    assert_eq!(t.len(), 10);
 
     assert_eq!(t.to_columns().len(), 6);
 }
