@@ -24,6 +24,7 @@ macro_rules! sep_finder_implementation {
                     if chars[index] == ' ' {
                         index += 1;
                     } else if chars[index] == $char && !found_sep {
+                        found_sep = true;
                         index += 1;
                     } else {
                         break;
@@ -89,7 +90,7 @@ impl SepFinder for SpacesFinder {
     }
 }
 
-pub fn read_line(line: String, separator_reader: &Box<dyn SepFinder>) -> Vec<String> {
+pub fn read_line(line: &String, separator_reader: &Box<dyn SepFinder>) -> Vec<String> {
     let chars: Vec<char> = line.chars().collect();
     let mut fields = Vec::new();
     let mut index = 0;
@@ -98,12 +99,12 @@ pub fn read_line(line: String, separator_reader: &Box<dyn SepFinder>) -> Vec<Str
     while index < length {
         if separator_reader.at_sep(&chars, index, length) {
             index = separator_reader.consume_sep(&chars, index, length);
-        } else {
-            let (field, new_index) = read_field(&chars, index, length, separator_reader);
-            index = new_index;
-
-            fields.push(field);
         }
+
+        let (field, new_index) = read_field(&chars, index, length, separator_reader);
+        index = new_index;
+
+        fields.push(field);
     };
 
     fields
@@ -162,7 +163,7 @@ mod test {
 
         let sep = CsvFinder{};
 
-        let parts = read_line(line.to_string(), &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
+        let parts = read_line(&line.to_string(), &(Box::new(CsvFinder{}) as Box<dyn SepFinder>));
 
         parts.into_iter().zip(vec!["this", "is", "a", "4", "'csv'"].into_iter()).for_each(|(l, r)| {
             assert_eq!(l, r);
@@ -179,15 +180,29 @@ mod test {
 
         let sep = Box::new(CsvFinder{}) as Box<dyn SepFinder>;
 
-        let length_header = read_line(header.to_string(), &sep).len();
+        let length_header = read_line(&header.to_string(), &sep).len();
 
-        let l1_header = read_line(l1.to_string(), &sep);
-        let l2_header = read_line(l2.to_string(), &sep);
-        let l3_header = read_line(l3.to_string(), &sep);
+        let l1_header = read_line(&l1.to_string(), &sep);
+        let l2_header = read_line(&l2.to_string(), &sep);
+        let l3_header = read_line(&l3.to_string(), &sep);
 
         assert_eq!(length_header, l1_header.len());
         assert_eq!(length_header, l2_header.len());
         assert_eq!(length_header, l3_header.len());
+    }
+
+    #[test]
+    fn empty_lines() {
+        let line = "21900879,1610612766,CHA,Charlotte,201587,Nicolas Batum,,DNP - Coach's Decision                  ,,,,,,,,,,,,,,,,,,,,,".to_string();
+
+        let sep = Box::new(CsvFinder{}) as Box<dyn SepFinder>;
+
+        let separated = read_line(&line, &sep);
+        let correct_count = line.chars().into_iter().filter(|c| {
+            *c == ','
+        }).count();
+        assert_eq!(correct_count, 28)
+
     }
 
 

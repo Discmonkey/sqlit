@@ -35,9 +35,7 @@ fn convert_into_column<T>(raw_values: &Vec<String>, mut converter: Box<dyn Conve
     let mut target = vec!();
 
     for raw_value in raw_values {
-
-
-        let value = if raw_value == null_as_string {
+        let value = if raw_value == null_as_string || raw_value.len() == 0 {
             None
         } else {
             // if the converter fails on a null value then we reject the column from being this type

@@ -28,20 +28,22 @@ impl Table {
 
         let mut lines = std::io::BufReader::new(f).lines();
 
-        let column_line = lines.next().ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"))?;
+        let column_line = lines.next().ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "file is empty"))??;
 
-        let column_names = parse_header_line(column_line?, separator);
+        let column_names = parse_header_line(&column_line, separator);
 
         let column_map = create_column_map(&alias, &column_names);
 
         let mut raw_string_columns: Vec<Vec<String>> = vec![vec!(); column_names.len()];
         let mut line_counter = 0;
 
-        for line in lines {
-            let parsed = read_line(line?, separator);
+        for maybe_line in lines {
+            let line = maybe_line?;
+            let parsed = read_line(&line, separator);
 
-            if parsed.len() < column_names.len() {
-                println!("Parse Error: Line {}: {}", line_counter, parsed.join(","))
+            if parsed.len() != column_names.len() {
+                println!("Parse Error: Line {}: {}, expected {} columns, got {}",
+                         line_counter, line, column_names.len(), parsed.len())
             } else {
                 parsed.into_iter().enumerate().for_each(|(num, s)| {
                     raw_string_columns[num].push(s);
@@ -272,7 +274,7 @@ impl Table {
     }
 }
 
-fn parse_header_line(header_line: String, separator: &Box<dyn SepFinder>) -> Vec<String> {
+fn parse_header_line(header_line: &String, separator: &Box<dyn SepFinder>) -> Vec<String> {
     read_line(header_line, separator).into_iter().enumerate().map(|(num, s)| {
         if s.len() == 0 {
             num.to_string()
