@@ -2,6 +2,8 @@ use crate::table::{Column, ColumnType};
 use std::cmp::Ordering;
 use crate::result::{SqlResult, SqlError};
 use crate::result::ErrorType::{Runtime, Type};
+use std::fmt::Display;
+use std::io::Write;
 
 /// apply block returns a non-column, which makes it useful for general vector operations such as len()
 macro_rules! apply_block {
@@ -173,6 +175,22 @@ impl Column {
             Column::Dates(_) => ColumnType::Date,
             Column::Strings(_) => ColumnType::String
         }
+    }
+
+    pub fn as_writable(&self, idx: usize, mut writer: &mut dyn Write, null: &str) {
+        apply_block!(self, v, {
+            let elem = if idx > v.len() {
+                v[0].clone()
+            } else {
+                v[idx].clone()
+            };
+
+            if let Some(s) = elem {
+                write!(&mut writer, "{}", s);
+            } else {
+                write!(&mut writer, "{}", null);
+            }
+        });
     }
 }
 

@@ -2,7 +2,11 @@ use crate::table::{Table, Column};
 use std::io::Write;
 use std::fmt::Display;
 use std::cmp::max;
+use std::path::Path;
+use std::fs::File;
 use chrono::NaiveDateTime;
+use crate::result::{SqlResult, SqlError};
+use std::error::Error;
 
 fn item_width(dest: &mut Vec<u8>, writable: &dyn Display) -> std::io::Result<usize> {
     dest.truncate(0);
@@ -152,6 +156,47 @@ impl std::fmt::Display for Table {
 
             if i != max_length - 1 {
                 writeln!(f)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Table {
+    pub fn write_to_file(&self, filename: &str) -> SqlResult<()> {
+        let path = Path::new(filename);
+
+        // Open a file in write-only mode, returns `io::Result<File>`
+        let mut file = File::create(filename).map_err(|e| SqlError::io_error(&e.to_string()))?;
+
+        let mut separator = if filename.ends_with(".tsv") {
+            "\t"
+        } else {
+            ","
+        }.to_string();
+
+        for (i, s) in self.column_names.iter().enumerate() {
+            if i > 0 {
+                file.write(separator.as_bytes());
+            }
+            file.write(s.as_bytes());
+        }
+
+        let quote = "\"".to_string();
+
+        for i in 0..self.len() {
+
+            file.write("\n".as_bytes());
+
+            for (num, column) in self.columns.iter().enumerate() {
+                if num > 0 {
+                    file.write(separator.as_bytes());
+                }
+                file.write(quote.as_bytes());
+                column.as_writable(i, &mut file, "NULL");
+                file.write(quote.as_bytes());
+
             }
         }
 

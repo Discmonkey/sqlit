@@ -1,12 +1,13 @@
 use std::fmt;
 use std::error::Error;
-use crate::result::ErrorType::{Runtime, Lookup};
+use crate::result::ErrorType::{Runtime, Lookup, IO};
 
 
 #[derive(Debug, Clone)]
 pub enum ErrorType {
     Lookup,
     Runtime,
+    IO,
     Syntax,
     Type,
 }
@@ -40,6 +41,13 @@ impl SqlError {
         SqlError {
             type_: Lookup,
             message
+        }
+    }
+
+    pub fn io_error(message: &str) -> Self {
+        SqlError {
+            type_: IO,
+            message: message.to_string()
         }
     }
 }
