@@ -60,3 +60,28 @@ fn test_select_from_select() {
         }
     }
 }
+
+#[test]
+fn case_sensitive_string_comp() {
+    let result = eval_query("select 1 from (select 'Hello' as hello) table where hello = 'Hello'");
+
+    match result {
+        Err(e) => {
+            println!("{}", e);
+            assert!(false)
+        },
+        Ok(t) => {
+            let cols = t.into_columns();
+
+            assert_eq!(cols.len(), 1);
+
+            match cols[0].column.as_ref() {
+                sqlit::table::Column::Ints(b) => {
+                    assert_eq!(b[0].unwrap(), 1)
+                },
+                _ => assert!(false)
+            }
+        }
+    }
+
+}

@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::fmt;
 use std::collections::VecDeque;
+use crate::tokenizer::TokenType::Literal;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
@@ -108,7 +109,12 @@ impl Tokenizer {
 
             for token_type in vec!(TokenType::Keyword, TokenType::Operator, TokenType::Literal, TokenType::Identifier, TokenType::Separator) {
                 if let Some(m) = cap.name(token_type.to_str()) {
-                    v.push_back(Token::new(m.to_string().trim().to_lowercase(), token_type));
+                    v.push_back(Token::new(
+                        if token_type == Literal {
+                            m.trim().to_string()
+                        } else {
+                            m.trim().to_lowercase()
+                        }, token_type));
                 }
             }
         }

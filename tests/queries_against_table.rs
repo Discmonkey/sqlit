@@ -8,10 +8,10 @@ use sqlit;
 // 1,"null",false
 // null,"null",false
 
-fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
+fn eval_query(query: &str, table: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
     let input = query.to_string();
 
-    let store = sqlit::table::Store::from_paths(vec!["tests/data/null_test.csv".to_string()],
+    let store = sqlit::table::Store::from_paths(vec![table.to_string()],
                                                 &(Box::new(sqlit::ingest::CsvFinder{}) as Box<dyn sqlit::ingest::SepFinder>), "null").map_err(|_| {
         sqlit::result::SqlError::new("could not read in table", sqlit::result::ErrorType::Runtime)
     })?;
@@ -29,7 +29,7 @@ fn eval_query(query: &str) -> sqlit::result::SqlResult<sqlit::table::Table> {
 
 #[test]
 fn test_column_is_hello() {
-    let result = eval_query("select second = 'hello' from null_test where second = 'hello'");
+    let result = eval_query("select second = 'hello' from null_test where second = 'hello'", "tests/data/null_test.csv");
 
     match result {
         Err(_e) => assert!(false),
@@ -53,7 +53,7 @@ fn test_column_is_hello() {
 
 #[test]
 fn test_join() {
-    let result = eval_query("select * from null_test a left join null_test b on a.first = b.first");
+    let result = eval_query("select * from null_test a left join null_test b on a.first = b.first", "tests/data/null_test.csv");
 
     if !result.is_ok() {
         println!("{}", result.err().unwrap());
@@ -69,4 +69,19 @@ fn test_join() {
     assert_eq!(t.len(), 6);
 
     assert_eq!(t.to_columns().len(), 6);
+}
+
+#[test]
+fn test_string_comp() {
+    let result = eval_query("select * from capitals_test where one = 'First Last'", "tests/data/capitals_test.csv");
+
+    match result {
+        Ok(r) => {
+            assert_eq!(r.len(), 1);
+        }
+        Err(e) => {
+            println!("{}", e);
+            assert!(false);
+        }
+    };
 }

@@ -235,7 +235,7 @@ fn eval_literal(node: ParserNode) -> SqlResult<NamedColumn>{
                                      }
 
                                      s
-                                 }).collect(), "nan")),
+                                 }).collect(), "NULL")),
         name: "".to_string(),
     })
 }
