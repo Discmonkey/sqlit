@@ -12,6 +12,7 @@ mod where_;
 mod limit;
 mod order_by;
 mod group_by;
+mod into;
 
 pub fn eval(root: ParserNode, op_context: &mut OpContext, table_context: &Store) -> SqlResult<Table> {
     match root.get_type() {

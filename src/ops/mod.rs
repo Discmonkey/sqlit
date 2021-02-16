@@ -54,6 +54,7 @@ impl OpContext {
         context.set_reduce("max", Box::new(Max{}));
         context.set_reduce("min", Box::new(Min{}));
         context.set_reduce("mean", Box::new(Mean{}));
+        context.set_reduce("avg", Box::new(Mean{}));
         context.set_reduce("sum", Box::new(Sum{}));
 
         context.set_apply("!", Box::new(Not{}));

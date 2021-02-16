@@ -7,6 +7,7 @@ use crate::eval::from;
 use super::columns;
 use super::order_by;
 use super::group_by;
+use super::into;
 use crate::result::ErrorType::Runtime;
 use std::rc::Rc;
 use std::collections::HashMap;
@@ -70,9 +71,19 @@ pub (super) fn eval(root: ParserNode, op_context: &OpContext,
             }, table_context)?
     };
 
-    if let Some(limit) = parts.limit {
-        limit::eval(limit, selected_table)
+    let final_table = if let Some(limit) = parts.limit {
+        limit::eval(limit, selected_table)?
     } else {
-        Ok(selected_table)
+        selected_table
+    };
+
+
+    if let Some(into_node) = parts.into {
+        into::eval(into_node, &final_table)?;
+
+        Ok(Table::new())
+    } else {
+        Ok(final_table)
     }
+
 }

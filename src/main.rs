@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
             TableCompleter::new(table_store.list().iter().map(|t| t.meta()).collect())));
 
     io.set_prompt("sqlit> ")?;
-
+    io.bind_sequence("clear", linefeed::command::Command::ClearScreen);
     // get ops
     let mut ops = ops::OpContext::new();
 

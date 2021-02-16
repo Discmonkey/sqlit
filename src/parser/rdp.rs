@@ -428,19 +428,11 @@ impl RecursiveDescentParser {
     fn parse_into(&mut self) -> ParserResult {
         let mut node = ParserNode::new(ParserNodeType::Into);
 
-        if let Some(t) = self.tokens.front() {
-            if !t.is("into") {
-                return Err(SqlError::new("expected order by clause", Syntax));
-            }
-        } else {
-            return Err(SqlError::new("empty token stream passed to where parser", Syntax));
-        }
-
         // skip into
-        self.tokens.pop_front().unwrap();
+        self.get_required_token_by_value("into", "into clause without starting into")?;
 
         // go ahead and add the identifier
-        node.add_token(self.tokens.pop_front().unwrap());
+        node.add_token(self.get_required_token_by_type(Literal, "writing to files requires 'filename.ext'")?);
 
         Ok(node)
     }
